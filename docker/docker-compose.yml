@@ -1,0 +1,41 @@
+# docker compose -f docker/docker-compose.yml run --rm multicam
+#
+# Runs the demo: renders a miniature capture, calibrates the rig, reconstructs
+# the part and estimates its 6-DoF pose, then checks every number against the
+# ground truth it generated.  Nothing is downloaded and no volume is required.
+
+services:
+  multicam:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: cv-multicam-3d-reconstruction:latest
+    # results/ and data/ are bind mounted so a run leaves something behind.
+    # Drop these two lines to run entirely inside the container.
+    volumes:
+      - ../results:/app/results
+      - ../data:/app/data
+    environment:
+      - OMP_NUM_THREADS=4
+      - MPLBACKEND=Agg
+    command: ["python", "scripts/demo.py", "--out", "/app/results/demo.json"]
+
+  # The full capture and every number the README quotes.  Hours rather than
+  # minutes, and it writes about a gigabyte into data/.
+  experiments:
+    extends:
+      service: multicam
+    command: >
+      sh -c "python scripts/make_dataset.py --out data/turntable &&
+             python scripts/calibrate.py --data data/turntable --out results &&
+             python scripts/reconstruct.py --data data/turntable --out results &&
+             python scripts/dense.py --data data/turntable --out results &&
+             python scripts/pose_eval.py --data data/turntable --out results &&
+             python scripts/train_refiner.py --data data/turntable --out results &&
+             python scripts/ablate.py --data data/turntable --out results &&
+             python scripts/colmap_baseline.py --data data/turntable --out results"
+
+  tests:
+    extends:
+      service: multicam
+    command: ["python", "-m", "pytest", "tests/", "-q"]

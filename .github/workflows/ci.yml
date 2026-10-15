@@ -1,0 +1,137 @@
+name: ci
+
+# What CI can and cannot do here, and what it costs.
+#
+# There is no dataset to download: every image in this repository is rendered
+# from a seed by `scripts/make_dataset.py`.  That is unusually good for CI --
+# it means the whole pipeline can run end to end on a clean runner with no
+# network access beyond pip -- and unusually bad for CI *minutes*, because
+# rendering is the expensive step.
+#
+# So the split is:
+#
+#   this workflow        lint, the unit tests, and `scripts/demo.py`, which
+#                        renders a miniature capture and runs calibration,
+#                        reconstruction and pose estimation over it end to end.
+#                        About four minutes on a standard runner.
+#
+#   `make experiments`   the full capture and every number quoted in the
+#                        README.  About forty minutes, run on a workstation,
+#                        with the result records committed under
+#                        results/published/ so they can be checked without
+#                        re-running them.
+#
+# Cost control, because this runs on a free account:
+#
+#   * One job, one Python version.  A version matrix doubles or triples the
+#     minutes to tell you something that changes about twice a year, so the
+#     older interpreter is checked on a weekly schedule instead.
+#   * `concurrency` cancels superseded runs, so pushing three times in five
+#     minutes costs one run and not three.
+#   * pip is cached on the hash of requirements.txt, which takes installation
+#     from about three minutes to about twenty seconds.
+#   * Torch comes from the CPU wheel index.  The default PyPI wheel pulls the
+#     whole CUDA stack, which is well over a gigabyte to download and install
+#     on a runner that has no GPU.
+#   * `paths-ignore` skips the whole thing for documentation-only commits.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  workflow_dispatch:
+  # Weekly, for the older-interpreter job below.  Monday morning, so a break
+  # has the week to be noticed rather than the weekend.
+  schedule:
+    - cron: '17 4 * * 1'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # CPU-only torch: the default wheel drags in the CUDA runtime, which
+          # is about 2 GB of download for a runner with no GPU in it.
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Lint
+        run: python -m flake8 src/ tests/ scripts/ capture/
+
+      - name: Tests
+        run: python -m pytest tests/ -q --durations=10
+
+      - name: The whole pipeline, end to end, on a capture rendered in-process
+        run: python scripts/demo.py --out /tmp/demo.json
+
+      - name: The demo produced the numbers it claims to
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("/tmp/demo.json"))
+          assert not d["failures"], d["failures"]
+          m = d["measured"]
+          # Re-assert the two that matter most, so a change to LIMITS that
+          # quietly loosens them still has to get past this file as well.
+          assert m["extrinsic_rmse_px"] < 1.0, m
+          assert m["pose_translation_mm"] < 25.0, m
+          print("demo ok:", json.dumps({k: round(v, 4) for k, v in m.items()}, indent=2))
+          PY
+
+      - name: Upload the demo record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-record
+          path: /tmp/demo.json
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # The older interpreter, once a week rather than on every push.  It catches a
+  # genuine incompatibility within seven days and costs about four minutes a
+  # week instead of four minutes a commit.
+  oldest-python:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+      - name: Tests
+        run: python -m pytest tests/ -q

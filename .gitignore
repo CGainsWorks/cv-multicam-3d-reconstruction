@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Generated results.  results/published/ is committed and is the exception.
+results/*
+!results/.gitkeep
+!results/published/
+!results/published/**
+
+# Generated datasets.  Everything under data/ is produced by
+# scripts/make_dataset.py and is reproducible from a seed, so none of it is
+# tracked.  The dataset card and the object definitions are.
+data/*
+!data/.gitkeep
+!data/DATASET_CARD.md
+
+# Trained weights live in Releases, not in the history.
+models/*.pt
+models/*.pth
+!models/.gitkeep
+
+# COLMAP working directories
+colmap_workspace/
+*.db
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

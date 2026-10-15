@@ -1,0 +1,28 @@
+# Pinned to what every number in the README was produced with.
+# Python 3.10 or newer (3.12 used for the results here).
+
+numpy>=1.26,<3
+scipy>=1.11,<2
+# contrib: the ChArUco detector used by the calibration target lives there.
+# headless: nothing in this repository opens a window.
+opencv-contrib-python-headless>=4.9,<6
+matplotlib>=3.8,<4
+pyyaml>=6.0
+tqdm>=4.66
+
+# Point-cloud fusion, normal estimation, Poisson meshing and the ICP used to
+# put a reconstruction into the CAD frame before it is scored.
+open3d>=0.18,<1
+
+# The pose-refinement network.  CPU wheels are enough: the network is small and
+# CI trains it end to end on CPU.  A CUDA build is picked up automatically if
+# one is installed.
+torch>=2.2,<3
+
+# COLMAP, as a library, used as the independent reference for the sparse
+# reconstruction in src/multicam/io/colmap.py.  Not used by our own pipeline.
+pycolmap>=3.10
+
+# Development
+pytest>=8.0
+flake8>=7.0

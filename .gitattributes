@@ -1,0 +1,20 @@
+# Normalise line endings so a checkout on Windows and one on Linux hash the same.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ply binary
+*.pt  binary
+*.pth binary
+*.npz binary
+
+# Git LFS.  Nothing in the history needs it today -- the renderer regenerates
+# every image and every mesh from a seed, and the trained weights are attached
+# to a Release rather than committed -- but the rules are declared so that a
+# large binary added later lands in LFS instead of the pack file.
+*.pt   filter=lfs diff=lfs merge=lfs -text
+*.pth  filter=lfs diff=lfs merge=lfs -text
+*.bag  filter=lfs diff=lfs merge=lfs -text
+*.mp4  filter=lfs diff=lfs merge=lfs -text
+*.gif  filter=lfs diff=lfs merge=lfs -text
