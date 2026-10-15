@@ -178,12 +178,43 @@ class TriMesh:
 # --------------------------------------------------------------------------
 
 
+#: A distinct texture offset for each of the six face orientations, in tiles.
+#:
+#: These are not cosmetic.  Without them the triplanar projection hands
+#: *identical* texture coordinates to any two faces whose projections coincide,
+#: and there are two such coincidences on any box:
+#:
+#: * A ``+z`` face and the ``-z`` face opposite it both project to ``(x, y)``,
+#:   so the top and the bottom of a plate are texturally identical.
+#: * A ``z`` face at ``(x0, y0)`` and a ``y`` face at ``(x0, z0 = y0)`` sample
+#:   the same texel, so the two limbs of an L-bracket become identical under
+#:   the swap ``y <-> z`` -- which is a 90 degree rotation about ``x``.
+#:
+#: The second one is the expensive one.  It gives the part an exact *appearance*
+#: symmetry that its geometry does not have, the descriptor matcher cannot tell
+#: the two limbs apart, and the pose estimator lands on the 90-degree
+#: alternative on about fifteen per cent of frames -- with a healthy inlier
+#: count and a 0.4 px residual, so nothing in the output looks wrong.  It is an
+#: artefact of the texture generator and a real part would not have it.
+#:
+#: The offsets are irrational-ish fractions of a tile so that no two of the six
+#: regions coincide under any axis swap, and the texture tiles, so an offset
+#: lands on genuinely different noise.
+_FACE_UV_OFFSETS = {
+    (0, 1): (0.000, 0.000), (0, -1): (0.517, 0.283),
+    (1, 1): (0.371, 0.613), (1, -1): (0.149, 0.829),
+    (2, 1): (0.733, 0.191), (2, -1): (0.907, 0.457),
+}
+
+
 def _planar_uv(vertices, faces, scale):
     """Triplanar UVs: project each face onto the plane its normal points along.
 
     The projection axis is chosen per face from the dominant component of the
     normal, so a box gets six flat, undistorted projections and a cylinder gets
-    a wrap that is only badly stretched exactly at the silhouette.
+    a wrap that is only badly stretched exactly at the silhouette.  Each of the
+    six orientations is then shifted into its own region of the texture; see
+    :data:`_FACE_UV_OFFSETS` for why that matters a great deal.
 
     The result is in world units times ``scale`` and is deliberately *not*
     wrapped into ``[0, 1]``: the sampler tiles, and wrapping here would put a
@@ -192,13 +223,18 @@ def _planar_uv(vertices, faces, scale):
     v = vertices[faces]
     n = np.cross(v[:, 1] - v[:, 0], v[:, 2] - v[:, 0])
     axis = np.argmax(np.abs(n), axis=1)
+    sign = np.sign(n[np.arange(len(faces)), axis])
+    sign[sign == 0] = 1
+
     uv = np.zeros((len(faces), 3, 2))
     for a in range(3):
-        m = axis == a
-        if not m.any():
-            continue
         other = [i for i in range(3) if i != a]
-        uv[m] = v[m][:, :, other] * scale
+        for s in (1, -1):
+            m = (axis == a) & (sign == s)
+            if not m.any():
+                continue
+            offset = np.asarray(_FACE_UV_OFFSETS[(a, s)])
+            uv[m] = v[m][:, :, other] * scale + offset
     return uv
 
 

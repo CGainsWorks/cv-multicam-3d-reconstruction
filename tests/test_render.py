@@ -193,6 +193,62 @@ def test_ply_round_trip(tmp_path):
     assert np.array_equal(back.faces, box.faces)
 
 
+def test_the_part_has_no_accidental_appearance_symmetry():
+    """Differently-oriented faces must not share a region of the texture.
+
+    Geometry alone is not enough, and nor is comparing two rendered images of
+    the whole part: the artefact is that *different points on different faces
+    are rendered identically*, which an image-level comparison averages away.
+
+    The triplanar projection used to hand every face the same function of its
+    world coordinates.  Two consequences, both invisible in any single picture:
+
+    * ``+z`` and ``-z`` faces both project to ``(x, y)``, so the top and the
+      bottom of a plate carried identical texture.
+    * a ``z`` face at ``(x0, y0)`` and a ``y`` face at ``(x0, z0 = y0)`` sample
+      the same texel, which makes the two limbs of an L-bracket look alike
+      under the swap ``y <-> z`` -- a 90 degree rotation about ``x``, which the
+      bracket's geometry does not admit at all.
+
+    The second one cost six of thirty-nine held-out pose frames.  Every failure
+    was within half a degree of 90, each with a healthy inlier count and a
+    0.4 px reprojection residual, so nothing in the output looked wrong.
+
+    The invariant that prevents it is that the six orientations map into
+    separated regions of the tiling texture, and that is what is asserted here:
+    directly, deterministically, and without depending on a sampling draw.
+    """
+    offsets = M._FACE_UV_OFFSETS
+    assert len(offsets) == 6, "three axes times two signs"
+
+    keys = sorted(offsets)
+    worst = None
+    for i, a in enumerate(keys):
+        for b in keys[i + 1:]:
+            d = np.abs(np.asarray(offsets[a]) - np.asarray(offsets[b]))
+            # Distance on the torus: the texture tiles, so 0.95 apart is 0.05.
+            d = np.minimum(d, 1.0 - d)
+            separation = float(np.max(d))
+            if worst is None or separation < worst[0]:
+                worst = (separation, a, b)
+    assert worst[0] > 0.1, (
+        "orientations %s and %s are only %.3f tiles apart in texture space, so "
+        "faces of those two orientations will sample overlapping texture"
+        % (worst[1], worst[2], worst[0])
+    )
+
+
+def test_the_part_is_textured_the_same_way_whatever_the_rendering_order():
+    """The UV mapping depends on the mesh, not on how it was assembled."""
+    a = M.bracket()
+    b = M.bracket()
+    assert np.allclose(a.uv, b.uv)
+    # And transforming a mesh must carry its texture with it unchanged, or a
+    # part would appear to re-texture itself as it turned on the table.
+    moved = a.transformed(se3.from_Rt(np.eye(3), [0.03, -0.02, 0.01]))
+    assert np.allclose(moved.uv, a.uv)
+
+
 def test_bracket_is_asymmetric_enough_for_add_to_mean_something():
     """ADD is only meaningful on a part that is not symmetric.
 

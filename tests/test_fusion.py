@@ -181,10 +181,26 @@ def test_cross_check_removes_a_view_nobody_agrees_with(swept):
     assert kept_good < depth_map.valid.sum() or kept_good == 0
 
 
+def _require_open3d():
+    """Skip rather than fail when Open3D is installed but cannot initialise.
+
+    On a bare Linux box -- a CI runner, a slim container -- the wheel imports
+    and then dies on ``libEGL.so.1``, which is an ``ImportError`` that
+    ``pytest.importorskip`` does not treat as "missing".  That is a deployment
+    problem, not a test failure, and the fix is in the Dockerfile and the CI
+    workflow; here it should skip and say which library is absent.
+    """
+    try:
+        import open3d  # noqa: F401
+    except ImportError as exc:
+        pytest.skip("open3d unavailable: %s" % exc)
+    return open3d
+
+
 @pytest.mark.slow
 def test_fusion_and_meshing_produce_a_surface(swept):
     """Open3D fusion end to end: cloud, normals, Poisson mesh."""
-    pytest.importorskip("open3d")
+    _require_open3d()
     from multicam.fusion import fuse_depth_maps, poisson_mesh
 
     depth_map, _, box = swept

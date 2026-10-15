@@ -13,7 +13,11 @@ FROM python:3.12-slim-bookworm
 
 # OpenCV and Open3D need a handful of system libraries even in their headless
 # builds.  libgomp is Open3D's OpenMP runtime; the rest are image and GL stubs.
+# libegl1 is the one that is easy to miss: Open3D links against EGL even in a
+# headless build, and without it `import open3d` fails with
+# "libEGL.so.1: cannot open shared object file".
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        libegl1 \
         libgl1 \
         libglib2.0-0 \
         libgomp1 \
