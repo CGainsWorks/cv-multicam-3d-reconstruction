@@ -1,189 +1,257 @@
 # cv-multicam-3d-reconstruction
 
-> **Status: planned. This repository is a brief, not an implementation.**
-> Nothing here is built yet. The sections below define what goes in it.
+> ### Clean-room reimplementation
+> This repository is an **independent reimplementation of a problem class**, built from
+> scratch on personal time using public and synthetic data and open-source libraries. It
+> is **not** derived from and contains no material belonging to any employer or client:
+> no employer source code, schematics, calibration data, client data or internal
+> documentation. It exists to demonstrate the architecture and engineering approach only.
 
-A calibrated multi-camera rig producing markerless 3D reconstruction and 6-DoF object pose. Classical feature matching and bundle adjustment provide the geometry, and a PyTorch refinement network improves pose accuracy on top, with an ablation proving the network earns its place.
+A calibrated four-camera rig that reconstructs a machined part and finds its
+6-DoF pose. Zhang calibration and a rig extrinsic bundle adjustment written from
+the equations, multi-view triangulation, a sparse bundle adjuster with a Schur
+complement over the landmarks, plane-sweep multi-view stereo, Open3D fusion and
+meshing, generalised-camera PnP across the whole rig, and a learned
+render-and-compare pose refiner that is ablated against the classical one.
 
----
+**There is no hardware behind this.** Every image is rendered by a software
+rasteriser written for the purpose, from a seed, in about twenty minutes. That
+is a real limitation and it is the first entry in
+[docs/limitations.md](docs/limitations.md). It is also what makes the ground
+truth exact, which is the only reason a calibration can be scored against the
+rig it was trying to recover rather than merely against its own residual.
 
-## What this covers
+<!-- table:headline -->
+_Not generated yet: run `make experiments`._
+<!-- /table:headline -->
 
-CV entries this repository is the evidence for:
+### What it looks like
 
-- Multi-Camera 3D Reconstruction and Pose Estimation
-
----
-
-## Requirements
-
-### Hardware
-
-- Multiple synchronised cameras (three or more)
-- Rigid mounting rig
-- Calibration target (checkerboard or ChArUco)
-- Turntable or a robotic pick cell
-- Target objects with known CAD models
-
-### Software
-
-- OpenCV for feature matching and bundle adjustment
-- Open3D for point-cloud fusion
-- PyTorch pose-refinement network
-- Multi-camera calibration toolchain (Kalibr or custom)
-- COLMAP as a reference baseline
-
-### Report and documentation deliverables
-
-- Calibration residuals
-- Reconstruction accuracy against ground truth
-- 6-DoF pose error statistics
-- Ablation showing the network contribution over classical refinement alone
+| | |
+| --- | --- |
+| ![summary](docs/plots/summary.png) | **Error through the pipeline, and what the ablation decided.** Left: the error at each stage, from the rig's extrinsics through the sparse and dense reconstructions to the final pose. Middle: how much of the part's surface each stage actually covers, which is the number that accuracy alone hides. Right: the ablation the whole repository is built around. |
+| ![reconstruction](docs/plots/reconstruction.png) | **The part is whatever moves.** Right-hand panel: every rigid motion the cross-station alignment found. The static group is the background, and it is the *larger* one, so selecting by size reconstructs the room. Selecting the group that moves reconstructs the part, and nothing linked a background point across two stations. |
 
 ---
 
-## Inputs
+## What is here
 
-- Synchronised multi-view image sets
-- Calibration target captures
-- Camera intrinsics and extrinsics
-- Object CAD models for evaluation
-
-## Outputs
-
-- Camera calibration files
-- Sparse and dense point clouds
-- Fused mesh
-- 6-DoF object poses with covariance
-- Reprojection error and pose error metrics
+| | |
+| --- | --- |
+| **Rig** | Four cameras on a 76-degree arc, 0.6 m from a turntable, 32-degree lens, 800 x 600. Each has its own focal length, principal point and radial-tangential distortion; the mounts are perturbed from nominal, which is what the extrinsic calibration has to find |
+| **Calibration** | ChArUco detection, normalised-DLT homographies, Zhang's closed form for the absolute conic, then a joint Levenberg-Marquardt over nine intrinsics and every board pose. Rig extrinsics initialised over a maximum-weight spanning tree of the camera co-observation graph, then bundle adjusted. Cross-checked against `cv2.calibrateCamera` on identical detections |
+| **Front end** | SIFT with the RootSIFT normalisation, ratio test, mutual consistency, and an epipolar gate that uses the calibrated rig to throw out matches no geometry can explain |
+| **Sparse reconstruction** | Per-station multi-view triangulation, cross-station alignment by **multi-motion RANSAC** that keeps the group which moves and discards the static background however large it is, global track building, then bundle adjustment with a Schur complement over the points and a Huber kernel |
+| **Dense** | Plane-sweep MVS bounded by the sparse cloud's own volume, ZNCC by box filters, sub-pixel parabola in inverse depth, N-view cross check, Open3D voxel fusion, normal orientation from the viewpoints, screened Poisson meshing with density trimming |
+| **Pose** | Appearance model built from the reconstruction and filtered to the CAD surface; generalised-camera PnP under RANSAC over all four cameras at once; Levenberg-Marquardt refinement with analytic Jacobians and a first-order covariance |
+| **Learned refiner** | A 0.6 M-parameter render-and-compare CNN over per-camera crops, predicting a twist applied with the same retraction the classical refiner uses. It is given the CAD model's *geometry* and never its appearance |
+| **Reference** | COLMAP, through `pycolmap`, on identical images. It shares no code with any of the above |
+| **Evaluation** | Reprojection residuals, point-to-surface distance to CAD, completeness, chamfer, ADD and ADD-S with recall at several thresholds, and per-class labelling so the fixture is not scored as the part |
+| **Simulator** | A z-buffered rasteriser with near-plane clipping, perspective-correct interpolation and physically correct lens distortion, plus the rig, the scene and the capture planner |
+| **Tests** | 131, including every Jacobian against finite differences, the renderer against the projection equations, the bundle adjuster against a known answer, and a firewall test that fails if any pipeline module so much as names a ground-truth accessor |
 
 ---
 
-## Intended structure
+## Run it
 
-```
-src/
-  calibration/            intrinsics, extrinsics, rig calibration
-  reconstruction/         features, matching, bundle adjustment
-  fusion/                 Open3D point cloud fusion, meshing
-  pose/                   classical PnP, learned refinement network
-  evaluation/             pose error, reprojection error
-capture/                  synchronised capture scripts
-data/                     calibration sets, object CAD, DATASET_CARD.md
-analysis/
-docs/
+```bash
+./scripts/run_demo.sh
 ```
 
-Plus the standard baseline: `README.md`, `LICENSE`, `.gitignore`, `.gitattributes`
-(Git LFS rules for weights, bags and media), `.github/workflows/ci.yml`, `docs/`,
-`scripts/setup.sh`, `scripts/run_demo.sh` and `tests/`.
+One command on a clean machine. It builds a virtual environment if there is not
+one, renders a miniature capture, calibrates the rig from it, reconstructs the
+part, estimates 6-DoF pose on held-out stations, and checks every number against
+the ground truth it generated. About four minutes. Nothing is downloaded except
+Python packages.
 
----
+`docker compose -f docker/docker-compose.yml run --rm multicam` does the same in
+a container.
 
-## Build checklist
-
-- [ ] Synchronised multi-camera capture
-- [ ] Intrinsic calibration per camera
-- [ ] Rig extrinsic calibration with residuals reported
-- [ ] Feature matching and sparse reconstruction
-- [ ] Bundle adjustment
-- [ ] Dense reconstruction and Open3D fusion
-- [ ] Classical 6-DoF pose via PnP
-- [ ] Learned pose-refinement network
-- [ ] Ablation: classical only vs classical plus network
-- [ ] Evaluation against CAD ground truth
-
----
-
-## Definition of done
-
-This repository is finished when:
-
-- [ ] The whole thing runs from one command on a clean machine.
-- [ ] The README opens with a diagram or a GIF, not a wall of text.
-- [ ] Every number quoted in the README is reproducible from a script in the repo.
-- [ ] Limitations are stated honestly in their own section.
-- [ ] A licence is declared.
-- [ ] Large binaries live in Releases or LFS, not in the Git history.
-- [ ] The repository URL is added to the matching CV bullet point.
-
----
-
-## Starter prompt
-
-Paste this into your coding agent of choice to begin.
-
-<details>
-<summary>Expand</summary>
-
-```
-You are helping me build a portfolio project from scratch. Read this brief and then
-propose a concrete implementation plan before writing any code.
-
-PROJECT: cv-multicam-3d-reconstruction
-A calibrated multi-camera rig producing markerless 3D reconstruction and 6-DoF object pose. Classical feature matching and bundle adjustment provide the geometry, and a PyTorch refinement network improves pose accuracy on top, with an ablation proving the network earns its place.
-
-TARGET STACK
-- OpenCV for feature matching and bundle adjustment
-- Open3D for point-cloud fusion
-- PyTorch pose-refinement network
-- Multi-camera calibration toolchain (Kalibr or custom)
-- COLMAP as a reference baseline
-
-HARDWARE CONTEXT
-- Multiple synchronised cameras (three or more)
-- Rigid mounting rig
-- Calibration target (checkerboard or ChArUco)
-- Turntable or a robotic pick cell
-- Target objects with known CAD models
-
-THE SYSTEM MUST TAKE THESE INPUTS
-- Synchronised multi-view image sets
-- Calibration target captures
-- Camera intrinsics and extrinsics
-- Object CAD models for evaluation
-
-AND PRODUCE THESE OUTPUTS
-- Camera calibration files
-- Sparse and dense point clouds
-- Fused mesh
-- 6-DoF object poses with covariance
-- Reprojection error and pose error metrics
-
-INTENDED REPOSITORY LAYOUT
-src/
-  calibration/            intrinsics, extrinsics, rig calibration
-  reconstruction/         features, matching, bundle adjustment
-  fusion/                 Open3D point cloud fusion, meshing
-  pose/                   classical PnP, learned refinement network
-  evaluation/             pose error, reprojection error
-capture/                  synchronised capture scripts
-data/                     calibration sets, object CAD, DATASET_CARD.md
-analysis/
-docs/
-
-CONSTRAINTS
-- Everything must run from a single command: `docker compose up` or `make demo`.
-- No placeholder or stub code presented as working. If something is not implemented, say so.
-- Every quantitative claim in the README must be reproducible from a script in this repo.
-- Use only public or synthetic data. Record the licence of every dataset used.
-
-
-START BY
-1. Confirming or challenging the proposed repository layout.
-2. Listing the specific libraries and versions you intend to pin.
-3. Identifying the single riskiest technical unknown and how to de-risk it first.
-Then work through the milestones in the README build checklist, one at a time.
-
+```bash
+make check                 # lint plus the full test suite, exactly what CI runs
+make data                  # render the full capture, about 20 minutes
+make experiments           # every number below, about 40 minutes after that
+make plots tables docs-check
 ```
 
-</details>
+**The demo's numbers are worse than the ones below, and deliberately so.** Its
+capture is a tenth the size, which calibrates coarsely — about 13 mm of rig
+extrinsic error against 2 mm here — and that error passes straight through to
+the pose. `make experiments` is what reproduces this page.
 
 ---
 
-## Notes
+## Results
 
-- Do not backdate commits to match CV dates. Publishing older work today is normal and expected.
-- Record dataset licences before training on anything. Several common research datasets are
-  non-commercial only.
-- Flip this repository to public once there is something in it worth showing.
+Full tables, every metric, every setting: **[docs/results.md](docs/results.md)**.
+
+### Calibration
+
+Per-camera intrinsics from that camera's own board sweep; rig extrinsics from 26
+shared stations. The residual is what you would have on real hardware. The error
+against truth is what you would not, and the gap between them is the point: a
+calibration can have a beautiful residual and be wrong.
+
+<!-- table:calibration -->
+_Not generated yet: run `make experiments`._
+<!-- /table:calibration -->
+
+![calibration](docs/plots/calibration.png)
+
+### Reconstruction
+
+Against the CAD model, in the ground-truth frame, with **no fitting at all** —
+the bundle adjustment holds the reference station fixed, so the reconstruction
+frame is the rig frame at station 0 by construction and ground truth gives the
+transform in closed form. ICP is run afterwards only as a diagnostic, and how
+far it moves is reported in [docs/results.md](docs/results.md).
+
+<!-- table:reconstruction -->
+_Not generated yet: run `make experiments`._
+<!-- /table:reconstruction -->
+
+![dense](docs/plots/dense.png)
+
+### 6-DoF pose
+
+Held-out stations, arbitrary orientations drawn from the full rotation group,
+against an appearance model built from the turntable scan.
+
+<!-- table:pose -->
+_Not generated yet: run `make experiments`._
+<!-- /table:pose -->
+
+![pose](docs/plots/pose.png)
+
+---
+
+## The ablation
+
+The brief this was built to asks for one thing above the rest: does the learned
+refiner earn its place, and if it does not, say so.
+
+### Does it ship?
+
+<!-- table:ablation -->
+_Not generated yet: run `make experiments`._
+<!-- /table:ablation -->
+
+### The same question, controlled
+
+Comparing a classical estimate against a refined classical estimate cannot
+separate "the network is a better refiner" from "the classical estimate was
+already at the noise floor and there was nothing left to correct". So both
+refiners are started from the **same** deliberately perturbed pose, across four
+magnitude bands.
+
+<!-- table:head_to_head -->
+_Not generated yet: run `make experiments`._
+<!-- /table:head_to_head -->
+
+![ablation](docs/plots/ablation.png)
+
+The remaining two experiments — how the result moves with the number of
+refinement iterations, and what happens as the classical stage is starved of
+correspondences — are in [docs/results.md](docs/results.md).
+
+---
+
+## COLMAP, as an independent reference
+
+COLMAP is the reference implementation for this problem and shares no code with
+anything in `src/multicam/reconstruction`. Agreement is evidence that the
+geometry is right; disagreement means one of the two has a bug.
+
+The comparison is **not symmetric**, and the report says so. COLMAP solves for
+every camera pose from scratch, which is a strictly harder problem than ours —
+we are handed the calibrated rig — and it recovers geometry only up to a
+similarity, so its result has to be scaled before it can be compared to a metric
+one. That scale factor is reported, because it is the single number that says
+what the rig calibration was worth.
+
+<!-- table:colmap -->
+_Not generated yet: run `make experiments`._
+<!-- /table:colmap -->
+
+---
+
+## How it works
+
+**[docs/design.md](docs/design.md)** is the architecture: the frame conventions
+and the bug they prevent, why the optimiser works on a manifold and what broke
+before it did, the Schur complement, why multi-motion alignment is necessary
+rather than clever, and what the learned refiner is and is not allowed to see.
+
+**[docs/calibration.md](docs/calibration.md)** is the calibration in detail.
+
+A few things worth pulling out here, because they are the ones that cost real
+time:
+
+- **The optimiser parameterised poses by their own logarithm and stepped with
+  `x + dx`.** That is wrong by the SE(3) right Jacobian, which is near the
+  identity only for small poses. The symptom was not a crash: it was a solver
+  that took one step, damped itself to a halt, reported "converged", and left
+  intrinsics 36 px out in focal length.
+- **The renderer applied lens distortion backwards.** A render warped the wrong
+  way still looks like a plausible lens and still calibrates to a self-consistent
+  model. Only a comparison against the projection equations shows it up; it put
+  2 px of systematic error into every detected corner.
+- **The dense stage's ambiguity test rejected 99.98 per cent of pixels**, because
+  it compared the winning depth hypothesis against its own immediate neighbours
+  in a cost volume that is smooth by construction.
+- **The part had an accidental *appearance* symmetry** — not a geometric one —
+  from the texture projection, which made the pose estimator land on the wrong
+  limb on six of thirty-nine frames at exactly 90 degrees, each with a healthy
+  inlier count and a 0.4 px residual. [Section 3a of the
+  limitations](docs/limitations.md#3a-one-near-symmetry-was-an-artefact-and-it-cost-six-frames).
+
+---
+
+## Limitations
+
+**[docs/limitations.md](docs/limitations.md)**, in full and in its own document.
+The short version:
+
+1. It is all synthetic, and the surface texture is the most flattering
+   assumption in it. A real machined part is often shiny and nearly featureless.
+2. The synchronised capture code has never been run, and everything here assumes
+   the four exposures are the same instant.
+3. The part is only weakly asymmetric, so ADD and ADD-S are both reported
+   everywhere.
+4. The turntable sees the part from one side, which caps completeness and means
+   the Poisson mesh invents the underside.
+5. The evaluation uses ground-truth segmentation to separate the part from the
+   fixture it is bolted to, deliberately, labelled, and confined to
+   `multicam.evaluation` by a test.
+6. One seed, one rig, one part. The numbers have no error bars.
+
+---
+
+## Repository layout
+
+```
+src/multicam/
+  geometry/        SO(3), SE(3), the pinhole-plus-radtan camera, triangulation
+  sim/             meshes, procedural textures, the rasteriser, the rig, capture planning
+  calibration/     ChArUco target, per-camera intrinsics, rig extrinsics
+  reconstruction/  features, stations, multi-motion alignment, bundle adjustment
+  fusion/          plane-sweep MVS, Open3D fusion and meshing
+  pose/            generalised PnP, the classical refiner, the learned refiner
+  evaluation/      pose and surface metrics, CAD registration, point labelling
+  io/              the capture layout, the COLMAP bridge
+  optim.py         manifold Levenberg-Marquardt with a robust kernel
+capture/           synchronised capture for real hardware; never run, and says so
+scripts/           one per stage, plus the demo, the plots and the table generator
+tests/             131 tests
+docs/              design, calibration, results, limitations
+data/              rendered captures and DATASET_CARD.md; nothing committed
+```
+
+---
+
+## Licence
+
+MIT, [LICENSE](LICENSE). Everything in this repository — the code, the rendered
+images, the object geometry, the textures — was generated by it. No third-party
+dataset is downloaded, used or redistributed; see
+[data/DATASET_CARD.md](data/DATASET_CARD.md).
