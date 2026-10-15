@@ -281,7 +281,7 @@ The ablation that decides whether it ships is in
 
 ## Testing
 
-131 tests, and the ones that earn their place are:
+135 tests, and the ones that earn their place are:
 
 - **Every Jacobian against central finite differences.** A solver with a subtly
   wrong Jacobian converges on easy problems and fails on hard ones, which is

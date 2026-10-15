@@ -42,7 +42,7 @@ import numpy as np
 from multicam.evaluation.metrics import pose_error_table
 from multicam.io.dataset import Dataset
 from multicam.pose import ObjectModel, estimate_pose, match_to_model
-from multicam.pose.classical import Correspondences
+from multicam.pose.classical import Correspondences, _reproject, refine_pose
 from multicam.pose.dataset import PerturbationSpec
 from multicam.pose.network import load_network
 from multicam.pose.refine import refine
@@ -221,12 +221,23 @@ def main(argv=None):
                 starts.append(T_start)
                 truth_list.append(truths[f])
                 # Classical refinement from the same start, on the same
-                # correspondences, with inliers reselected at the start pose.
-                lm_result = estimate_pose(
-                    rig, correspondences[f], threshold_px=args.threshold_px,
-                    initial=T_start, rng=np.random.default_rng(f),
-                )
-                lm_out.append(lm_result.T_rig_object if lm_result.ok else None)
+                # correspondences.  `refine_pose` directly, not
+                # `estimate_pose(initial=...)`: the latter reselects inliers at
+                # the start pose and *refuses* if too few are within threshold,
+                # which from a 12 mm start it almost always is.  That turned
+                # this experiment into a comparison between a refiner that
+                # always answers and one that answers two times in forty, and
+                # the two medians were then over completely different subsets.
+                #
+                # Inliers are reselected at a threshold scaled to the
+                # perturbation, so the classical refiner is not handed a
+                # correspondence set chosen by the answer.
+                errs = _reproject(rig, T_start, correspondences[f])
+                gate = max(args.threshold_px, 3.0 * t_mag * 1000.0)
+                inliers = {c.camera: errs[c.camera] < gate for c in correspondences[f]}
+                T_lm, _ = refine_pose(rig, T_start, correspondences[f], inliers,
+                                      huber_px=args.threshold_px)
+                lm_out.append(T_lm)
                 net_out.append(
                     refine(net, renderer, images[f], rig, T_start,
                            iterations=args.iterations, device=device)

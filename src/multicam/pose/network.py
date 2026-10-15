@@ -160,7 +160,52 @@ def se3_exp_torch(twist):
     return T
 
 
-def point_matching_loss(twist, T_current, T_target, model_points):
+def apply_correction_torch(T_current, twist, centroid):
+    """Compose a predicted twist onto a pose, in the frame the twist lives in.
+
+    The twist is expressed in a frame that sits **at the object's centre and is
+    oriented like the rig**, so
+
+        T_new = A exp(delta) A^-1 T,     A = translation(T @ centroid)
+
+    This is the single most important choice in the whole refiner and it took
+    three failed training runs to get right.
+
+    The obvious alternatives are both unlearnable:
+
+    * ``T exp(delta)`` puts the twist in the *object's* frame.  The network sees
+      camera crops, so the map from "the silhouette is three pixels left in
+      camera 0" to an object-frame correction depends on the object's current
+      orientation -- a latent the network is never given.  On a turntable
+      sequence, where the object only ever rotates about one axis, it would
+      half work; on poses drawn from the full rotation group it cannot work at
+      all, and the symptom is a training loss that does not move from the
+      identity in any number of steps.
+    * ``exp(delta) T`` puts it in the rig frame, which fixes the orientation
+      problem but rotates the object about the *rig origin*, 0.6 m away.  A
+      one-degree rotation then translates the part by 10 mm, so rotation and
+      translation are coupled through a lever arm that varies with where the
+      part is standing.
+
+    Centring on the object and orienting with the rig removes both.  The map
+    from image displacement to twist is then fixed per camera, which is exactly
+    what the camera embedding can encode.
+    """
+    centre = torch.einsum("bij,j->bi", T_current[:, :3, :3], centroid) + T_current[:, :3, 3]
+    delta = se3_exp_torch(twist)
+
+    # A exp(delta) A^-1 with A a pure translation is just a shift of the
+    # translation part, so it is written out rather than built as matrices.
+    R_d = delta[:, :3, :3]
+    t_d = delta[:, :3, 3]
+    shifted = torch.zeros_like(delta)
+    shifted[:, :3, :3] = R_d
+    shifted[:, :3, 3] = t_d + centre - torch.einsum("bij,bj->bi", R_d, centre)
+    shifted[:, 3, 3] = 1.0
+    return torch.bmm(shifted, T_current)
+
+
+def point_matching_loss(twist, T_current, T_target, model_points, centroid=None):
     """DeepIM's loss: how far the predicted pose moves the model's own points.
 
     Minimising the twist directly would weight three millimetres of translation
@@ -168,8 +213,10 @@ def point_matching_loss(twist, T_current, T_target, model_points):
     them by what they actually do to the part, which is what ADD measures and
     therefore what the result is scored on.
     """
-    delta = se3_exp_torch(twist)
-    predicted = torch.bmm(T_current, delta)
+    if centroid is None:
+        predicted = torch.bmm(T_current, se3_exp_torch(twist))
+    else:
+        predicted = apply_correction_torch(T_current, twist, centroid)
     a = torch.einsum("bij,pj->bpi", predicted[:, :3, :3], model_points) + \
         predicted[:, :3, 3].unsqueeze(1)
     b = torch.einsum("bij,pj->bpi", T_target[:, :3, :3], model_points) + \

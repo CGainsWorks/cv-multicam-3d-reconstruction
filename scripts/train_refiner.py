@@ -41,11 +41,13 @@ def build_parser():
     p.add_argument("--epochs", type=int, default=24)
     p.add_argument("--batch-size", type=int, default=16)
     p.add_argument("--samples-per-frame", type=int, default=10)
-    p.add_argument("--lr", type=float, default=3e-4)
+    p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--width", type=int, default=32)
     p.add_argument("--workers", type=int, default=0)
     p.add_argument("--stations", type=int, default=0, help="limit training stations")
+    p.add_argument("--min-translation-mm", type=float, default=1.0)
     p.add_argument("--max-translation-mm", type=float, default=15.0)
+    p.add_argument("--min-rotation-deg", type=float, default=0.3)
     p.add_argument("--max-rotation-deg", type=float, default=8.0)
     p.add_argument("--device", default="auto")
     p.add_argument("--seed", type=int, default=0)
@@ -74,7 +76,9 @@ def main(argv=None):
     renderer = ModelRenderer(cad)
 
     perturbation = PerturbationSpec(
+        min_translation_m=args.min_translation_mm * 1e-3,
         max_translation_m=args.max_translation_mm * 1e-3,
+        min_rotation_deg=args.min_rotation_deg,
         max_rotation_deg=args.max_rotation_deg,
     )
     say("perturbation range: %.2f-%.1f mm, %.2f-%.1f deg (log-uniform magnitude)"

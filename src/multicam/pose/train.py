@@ -34,7 +34,16 @@ class TrainConfig:
     epochs: int = 24
     batch_size: int = 16
     samples_per_frame: int = 10
-    learning_rate: float = 3e-4
+    #: 1e-3, not the 3e-4 that is the reflex for AdamW on a vision model.
+    #:
+    #: The head is zero-initialised and the output is scaled by
+    #: TRANSLATION_SCALE and ROTATION_SCALE before it is exponentiated, so the
+    #: gradients reaching the trunk start around 2e-3 and the clip at 1.0 never
+    #: engages.  At 3e-4 the refiner moved so slowly that after a thousand
+    #: steps its validation loss was still within 0.1 per cent of predicting
+    #: nothing at all -- which reads exactly like an architecture that cannot
+    #: learn the task, and is not.
+    learning_rate: float = 1e-3
     weight_decay: float = 1e-4
     grad_clip: float = 1.0
     validation_fraction: float = 0.15
@@ -82,6 +91,8 @@ def train(images_by_frame, poses_by_frame, rig, renderer, cad, config=None,
 
     model_points, _ = cad.sample_surface(int(config.model_points), rng)
     model_points_t = torch.from_numpy(model_points.astype(np.float32)).to(device)
+    # The frame the predicted twist lives in; see apply_correction_torch.
+    centroid_t = torch.from_numpy(np.asarray(renderer.centre, dtype=np.float32)).to(device)
 
     def make(frames_subset, samples, seed):
         return RefinementDataset(
@@ -94,9 +105,17 @@ def train(images_by_frame, poses_by_frame, rig, renderer, cad, config=None,
     train_set = make(train_frames, config.samples_per_frame, config.seed + 1)
     val_set = make(val_frames, max(4, config.samples_per_frame // 2), config.seed + 999)
 
+    # Generating a sample means rendering the CAD model into four crops, which
+    # costs about 120 ms on one core and is the binding constraint on how many
+    # optimiser steps the refiner gets.  Workers are worth real money here;
+    # persistent ones matter on Windows, where each worker start re-imports
+    # the world and re-pickles the image cache.
+    loader_extra = {}
+    if config.num_workers > 0:
+        loader_extra = {"persistent_workers": True, "prefetch_factor": 2}
     train_loader = DataLoader(
         train_set, batch_size=config.batch_size, shuffle=True, collate_fn=collate,
-        num_workers=config.num_workers, drop_last=True,
+        num_workers=config.num_workers, drop_last=True, **loader_extra,
     )
     val_loader = DataLoader(
         val_set, batch_size=config.batch_size, shuffle=False, collate_fn=collate,
@@ -124,7 +143,8 @@ def train(images_by_frame, poses_by_frame, rig, renderer, cad, config=None,
             T_target = batch["T_target"].to(device)
 
             twist = net(crops, valid)
-            loss = point_matching_loss(twist, T_current, T_target, model_points_t)
+            loss = point_matching_loss(twist, T_current, T_target, model_points_t,
+                                       centroid_t)
 
             optimiser.zero_grad(set_to_none=True)
             loss.backward()
@@ -143,16 +163,14 @@ def train(images_by_frame, poses_by_frame, rig, renderer, cad, config=None,
                 T_current = batch["T_current"].to(device)
                 T_target = batch["T_target"].to(device)
                 twist = net(crops, valid)
-                val_losses.append(float(
-                    point_matching_loss(twist, T_current, T_target, model_points_t)
-                ))
+                val_losses.append(float(point_matching_loss(
+                    twist, T_current, T_target, model_points_t, centroid_t)))
                 # What the loss would be if the network predicted nothing.  The
                 # ratio to it is the only number that says the refiner is doing
                 # anything at all.
                 zero = torch.zeros_like(twist)
-                baseline.append(float(
-                    point_matching_loss(zero, T_current, T_target, model_points_t)
-                ))
+                baseline.append(float(point_matching_loss(
+                    zero, T_current, T_target, model_points_t, centroid_t)))
 
         train_loss = float(np.mean(losses)) if losses else float("nan")
         val_loss = float(np.mean(val_losses)) if val_losses else float("nan")

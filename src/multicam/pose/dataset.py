@@ -33,9 +33,20 @@ from .render_compare import build_input
 class PerturbationSpec:
     """The range of initial errors the refiner is trained to correct."""
 
-    min_translation_m: float = 0.0002
+    #: The lower end is 1 mm and 0.3 degrees, not something much smaller.
+    #:
+    #: A 0.2 mm perturbation moves the part's silhouette by a fifth of a pixel
+    #: at this stand-off.  There is no signal in such a sample -- the rendered
+    #: silhouette and the observed one are the same picture -- and its target
+    #: is a twist of essentially zero.  Filling a third of the training set
+    #: with those teaches the refiner that predicting nothing is usually right,
+    #: which is exactly the behaviour it got stuck in.
+    #:
+    #: 1 mm is a quarter of the classical estimator's median error on this rig,
+    #: so the range still comfortably brackets what the refiner will be handed.
+    min_translation_m: float = 0.001
     max_translation_m: float = 0.015
-    min_rotation_deg: float = 0.05
+    min_rotation_deg: float = 0.3
     max_rotation_deg: float = 8.0
 
     def sample(self, rng):

@@ -1,0 +1,1298 @@
+{
+  "commit": "5e80cc8",
+  "dataset": "data/turntable",
+  "headline": {
+    "add_median_mm": 3.80303721320558,
+    "add_recall_2pct": 0.45,
+    "failures": 1,
+    "rotation_median_deg": 0.2924288006211492,
+    "stations": 40,
+    "translation_median_mm": 3.800066408308141
+  },
+  "metrics": {
+    "add_mm": {
+      "mean": 4.137709790800409,
+      "median": 3.80303721320558,
+      "p90": 6.060095953900983
+    },
+    "add_recall_10_pct_diameter": 0.975,
+    "add_recall_1mm": 0.025,
+    "add_recall_2_pct_diameter": 0.45,
+    "add_recall_2mm": 0.125,
+    "add_recall_5_pct_diameter": 0.975,
+    "add_recall_5mm": 0.625,
+    "adds_mm": {
+      "mean": 3.0891386017292137,
+      "median": 3.1238313677078042,
+      "p90": 4.30476420342771
+    },
+    "adds_recall_10_pct_diameter": 0.975,
+    "adds_recall_2_pct_diameter": 0.675,
+    "adds_recall_5_pct_diameter": 0.975,
+    "diameter_mm": 187.21111050502944,
+    "failures": 1,
+    "n": 40,
+    "n_solved": 39,
+    "rotation_deg": {
+      "mean": 0.30532054126526814,
+      "median": 0.2924288006211492,
+      "p90": 0.47038223676051927
+    },
+    "translation_mm": {
+      "mean": 4.129674531499824,
+      "median": 3.800066408308141,
+      "p90": 6.066087924301911
+    }
+  },
+  "model": {
+    "candidates": 2271,
+    "median_distance_mm": 0.35789841786026955,
+    "on_surface": 1266,
+    "rejected": 1005,
+    "surface_threshold_mm": 4.0
+  },
+  "per_station": [
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 510,
+      "frame": 100,
+      "inlier_ratio": 0.711764705882353,
+      "inliers": 363,
+      "inliers_per_camera": {
+        "0": 204,
+        "1": 149,
+        "2": 10,
+        "3": 0
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.020450367199373033,
+        0.025908787876677667,
+        0.01658857155205035
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.4506095732210318,
+      "rotation_error_deg": 0.3182348969377123,
+      "rotation_sigma_deg": [
+        0.03306154793929364,
+        0.01367186210997909,
+        0.023189945531299307
+      ],
+      "seconds": 0.08,
+      "solved": true,
+      "translation_error_mm": 3.800066408308141
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 415,
+      "frame": 101,
+      "inlier_ratio": 0.6746987951807228,
+      "inliers": 280,
+      "inliers_per_camera": {
+        "0": 113,
+        "1": 44,
+        "2": 53,
+        "3": 70
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.017785424692443572,
+        0.0138173264266458,
+        0.009399058779423286
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.40987065307224296,
+      "rotation_error_deg": 0.36748916378011465,
+      "rotation_sigma_deg": [
+        0.018171896136173774,
+        0.012217948127765697,
+        0.014334844670079212
+      ],
+      "seconds": 0.074,
+      "solved": true,
+      "translation_error_mm": 7.614538306757828
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 586,
+      "frame": 102,
+      "inlier_ratio": 0.7849829351535836,
+      "inliers": 460,
+      "inliers_per_camera": {
+        "0": 155,
+        "1": 207,
+        "2": 98,
+        "3": 0
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.015043258842401569,
+        0.019371247677796823,
+        0.010238665187889804
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.42224818396610286,
+      "rotation_error_deg": 0.45167382103627957,
+      "rotation_sigma_deg": [
+        0.022780135045793164,
+        0.012470827491140101,
+        0.015807101153472797
+      ],
+      "seconds": 0.051,
+      "solved": true,
+      "translation_error_mm": 3.6264542916817923
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 312,
+      "frame": 103,
+      "inlier_ratio": 0.5448717948717948,
+      "inliers": 170,
+      "inliers_per_camera": {
+        "0": 17,
+        "1": 67,
+        "2": 38,
+        "3": 48
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.02249064738559091,
+        0.01645699492398512,
+        0.01807833569281326
+      ],
+      "ransac_iterations": 52,
+      "rmse_px": 0.4108544234249339,
+      "rotation_error_deg": 0.17599607316116636,
+      "rotation_sigma_deg": [
+        0.022122712770138584,
+        0.019554028696872876,
+        0.018041263592607017
+      ],
+      "seconds": 0.065,
+      "solved": true,
+      "translation_error_mm": 2.266585308740729
+    },
+    {
+      "cameras_used": 2,
+      "converged": true,
+      "correspondences": 170,
+      "frame": 104,
+      "inlier_ratio": 0.29411764705882354,
+      "inliers": 50,
+      "inliers_per_camera": {
+        "0": 44,
+        "1": 6,
+        "2": 0,
+        "3": 0
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.1620055684962959,
+        0.13432910125401767,
+        0.06424455772655761
+      ],
+      "ransac_iterations": 357,
+      "rmse_px": 0.6861989677341013,
+      "rotation_error_deg": 0.20969453083698616,
+      "rotation_sigma_deg": [
+        0.09505340774449474,
+        0.06641162725789829,
+        0.07092169551579713
+      ],
+      "seconds": 0.423,
+      "solved": true,
+      "translation_error_mm": 3.7721734950113563
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 307,
+      "frame": 105,
+      "inlier_ratio": 0.38762214983713356,
+      "inliers": 119,
+      "inliers_per_camera": {
+        "0": 5,
+        "1": 2,
+        "2": 0,
+        "3": 112
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.024509814243622877,
+        0.04645572981326712,
+        0.05054028389009277
+      ],
+      "ransac_iterations": 153,
+      "rmse_px": 0.4976378831402735,
+      "rotation_error_deg": 0.2007821428843017,
+      "rotation_sigma_deg": [
+        0.056411449002907434,
+        0.034799456726656526,
+        0.03584969571958328
+      ],
+      "seconds": 0.249,
+      "solved": true,
+      "translation_error_mm": 5.254165273292115
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 307,
+      "frame": 106,
+      "inlier_ratio": 0.6026058631921825,
+      "inliers": 185,
+      "inliers_per_camera": {
+        "0": 75,
+        "1": 17,
+        "2": 29,
+        "3": 64
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.01670261212665164,
+        0.013576258034175096,
+        0.017769216022627907
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.4431494421786479,
+      "rotation_error_deg": 0.07691710561825242,
+      "rotation_sigma_deg": [
+        0.026231886264816057,
+        0.01895589134918032,
+        0.01720515316795259
+      ],
+      "seconds": 0.066,
+      "solved": true,
+      "translation_error_mm": 1.4179232733915552
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 341,
+      "frame": 107,
+      "inlier_ratio": 0.4222873900293255,
+      "inliers": 144,
+      "inliers_per_camera": {
+        "0": 1,
+        "1": 5,
+        "2": 61,
+        "3": 77
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.033124444861340904,
+        0.011547423094378903,
+        0.018936083483273674
+      ],
+      "ransac_iterations": 117,
+      "rmse_px": 0.2950693621431843,
+      "rotation_error_deg": 0.5108537807379284,
+      "rotation_sigma_deg": [
+        0.01518664508389502,
+        0.015429279673206068,
+        0.011799900826265388
+      ],
+      "seconds": 0.175,
+      "solved": true,
+      "translation_error_mm": 4.966422650427289
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 825,
+      "frame": 108,
+      "inlier_ratio": 0.8557575757575757,
+      "inliers": 706,
+      "inliers_per_camera": {
+        "0": 17,
+        "1": 128,
+        "2": 257,
+        "3": 304
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.0050338319128426946,
+        0.013159249182728155,
+        0.004298855321559
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3440170311687933,
+      "rotation_error_deg": 0.3595741827358927,
+      "rotation_sigma_deg": [
+        0.011412460601673686,
+        0.0063055738546764625,
+        0.00960258501601815
+      ],
+      "seconds": 0.075,
+      "solved": true,
+      "translation_error_mm": 2.7631803104762347
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 586,
+      "frame": 109,
+      "inlier_ratio": 0.7901023890784983,
+      "inliers": 463,
+      "inliers_per_camera": {
+        "0": 269,
+        "1": 94,
+        "2": 43,
+        "3": 57
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.01043183451789405,
+        0.013036634518639937,
+        0.005403974702836983
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.35766497948685244,
+      "rotation_error_deg": 0.2924288006211492,
+      "rotation_sigma_deg": [
+        0.011649107646610573,
+        0.00714094969889215,
+        0.01047522689872899
+      ],
+      "seconds": 0.075,
+      "solved": true,
+      "translation_error_mm": 7.2937790396905555
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 342,
+      "frame": 110,
+      "inlier_ratio": 0.652046783625731,
+      "inliers": 223,
+      "inliers_per_camera": {
+        "0": 6,
+        "1": 80,
+        "2": 86,
+        "3": 51
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.018657957268099365,
+        0.009820453848032436,
+        0.011662998466811823
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3193804005596893,
+      "rotation_error_deg": 0.5112429355747052,
+      "rotation_sigma_deg": [
+        0.010514381621330976,
+        0.011948226326056225,
+        0.010125378228318636
+      ],
+      "seconds": 0.073,
+      "solved": true,
+      "translation_error_mm": 3.514607618566854
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 591,
+      "frame": 111,
+      "inlier_ratio": 0.7766497461928934,
+      "inliers": 459,
+      "inliers_per_camera": {
+        "0": 66,
+        "1": 68,
+        "2": 134,
+        "3": 191
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.013118387499735306,
+        0.01329945101547839,
+        0.0079342921248056
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.4205794822301496,
+      "rotation_error_deg": 0.2648224782464125,
+      "rotation_sigma_deg": [
+        0.016538887558574054,
+        0.011565778926915033,
+        0.01297809494520402
+      ],
+      "seconds": 0.069,
+      "solved": true,
+      "translation_error_mm": 6.6108660712113565
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 364,
+      "frame": 112,
+      "inlier_ratio": 0.6043956043956044,
+      "inliers": 220,
+      "inliers_per_camera": {
+        "0": 31,
+        "1": 96,
+        "2": 68,
+        "3": 25
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.023123704647147632,
+        0.012988697592887255,
+        0.017071766109361234
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3949059901098159,
+      "rotation_error_deg": 0.514510218032456,
+      "rotation_sigma_deg": [
+        0.01388393282718733,
+        0.01596667638224592,
+        0.012205635695376226
+      ],
+      "seconds": 0.071,
+      "solved": true,
+      "translation_error_mm": 4.122243037863595
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 495,
+      "frame": 113,
+      "inlier_ratio": 0.6626262626262627,
+      "inliers": 328,
+      "inliers_per_camera": {
+        "0": 18,
+        "1": 5,
+        "2": 60,
+        "3": 245
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.008511209234959094,
+        0.019024384782941137,
+        0.013971577763050497
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.33681532933401603,
+      "rotation_error_deg": 0.17695022266593002,
+      "rotation_sigma_deg": [
+        0.021685700187682677,
+        0.014247508507269246,
+        0.015512024799021133
+      ],
+      "seconds": 0.068,
+      "solved": true,
+      "translation_error_mm": 5.910325055538207
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 230,
+      "frame": 114,
+      "inlier_ratio": 0.3347826086956522,
+      "inliers": 77,
+      "inliers_per_camera": {
+        "0": 1,
+        "1": 1,
+        "2": 18,
+        "3": 57
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.05615211750490501,
+        0.01968777916005967,
+        0.043420975025304426
+      ],
+      "ransac_iterations": 240,
+      "rmse_px": 0.3695078539536419,
+      "rotation_error_deg": 0.1843312378191947,
+      "rotation_sigma_deg": [
+        0.03733883321789664,
+        0.029779738076969223,
+        0.020592858796350345
+      ],
+      "seconds": 0.278,
+      "solved": true,
+      "translation_error_mm": 3.105960935402142
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 278,
+      "frame": 115,
+      "inlier_ratio": 0.5863309352517986,
+      "inliers": 163,
+      "inliers_per_camera": {
+        "0": 34,
+        "1": 15,
+        "2": 21,
+        "3": 93
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.024309225080645796,
+        0.019826655281704585,
+        0.013577410466500855
+      ],
+      "ransac_iterations": 85,
+      "rmse_px": 0.44112490000774573,
+      "rotation_error_deg": 0.2471451648476231,
+      "rotation_sigma_deg": [
+        0.027900284568578418,
+        0.014994728848210369,
+        0.01979698887008749
+      ],
+      "seconds": 0.133,
+      "solved": true,
+      "translation_error_mm": 2.639349197820319
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 222,
+      "frame": 116,
+      "inlier_ratio": 0.32882882882882886,
+      "inliers": 73,
+      "inliers_per_camera": {
+        "0": 65,
+        "1": 5,
+        "2": 2,
+        "3": 1
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.04275347134412397,
+        0.01636068165504306,
+        0.03222100937199011
+      ],
+      "ransac_iterations": 254,
+      "rmse_px": 0.25657728956160536,
+      "rotation_error_deg": 0.3700805788251729,
+      "rotation_sigma_deg": [
+        0.018611855316431895,
+        0.0180600124250812,
+        0.012819507692979504
+      ],
+      "seconds": 0.288,
+      "solved": true,
+      "translation_error_mm": 3.374139508917883
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 354,
+      "frame": 117,
+      "inlier_ratio": 0.4463276836158192,
+      "inliers": 158,
+      "inliers_per_camera": {
+        "0": 0,
+        "1": 1,
+        "2": 28,
+        "3": 129
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.03143981858526388,
+        0.0491676894933016,
+        0.042861864483697616
+      ],
+      "ransac_iterations": 96,
+      "rmse_px": 0.4280524721943816,
+      "rotation_error_deg": 0.38794179577442195,
+      "rotation_sigma_deg": [
+        0.04539635712639879,
+        0.0277955223192106,
+        0.031296100127860514
+      ],
+      "seconds": 0.127,
+      "solved": true,
+      "translation_error_mm": 3.6297213364537235
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 395,
+      "frame": 118,
+      "inlier_ratio": 0.6987341772151898,
+      "inliers": 276,
+      "inliers_per_camera": {
+        "0": 84,
+        "1": 68,
+        "2": 62,
+        "3": 62
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.014917498631027919,
+        0.010489251236283184,
+        0.0118173584436392
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.35788958909627494,
+      "rotation_error_deg": 0.10705860264086671,
+      "rotation_sigma_deg": [
+        0.015086090052877164,
+        0.012581517924191286,
+        0.012654959825807461
+      ],
+      "seconds": 0.065,
+      "solved": true,
+      "translation_error_mm": 0.5278798281935385
+    },
+    {
+      "cameras_used": 2,
+      "converged": true,
+      "correspondences": 169,
+      "frame": 119,
+      "inlier_ratio": 0.23076923076923078,
+      "inliers": 39,
+      "inliers_per_camera": {
+        "0": 38,
+        "1": 1,
+        "2": 0,
+        "3": 0
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.2311159696575863,
+        0.20744951293460814,
+        0.08752438121136308
+      ],
+      "ransac_iterations": 600,
+      "rmse_px": 0.5040641500976994,
+      "rotation_error_deg": 0.4602643507661668,
+      "rotation_sigma_deg": [
+        0.07503318539555918,
+        0.04364875029541676,
+        0.057313332365094304
+      ],
+      "seconds": 0.699,
+      "solved": true,
+      "translation_error_mm": 2.7183018424278687
+    },
+    {
+      "cameras_used": 1,
+      "converged": true,
+      "correspondences": 254,
+      "frame": 120,
+      "inlier_ratio": 0.5275590551181102,
+      "inliers": 134,
+      "inliers_per_camera": {
+        "0": 134,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.14530310873493033,
+        0.39646746618430195,
+        0.1474683730405959
+      ],
+      "ransac_iterations": 58,
+      "rmse_px": 0.38727010549394303,
+      "rotation_error_deg": 0.18363232044183794,
+      "rotation_sigma_deg": [
+        0.11026335528996847,
+        0.03373841823898354,
+        0.0951209815932607
+      ],
+      "seconds": 0.063,
+      "solved": true,
+      "translation_error_mm": 4.939820655427512
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 244,
+      "frame": 121,
+      "inlier_ratio": 0.5040983606557377,
+      "inliers": 123,
+      "inliers_per_camera": {
+        "0": 0,
+        "1": 9,
+        "2": 55,
+        "3": 59
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.023095927236610744,
+        0.01334547005336749,
+        0.012277052643818908
+      ],
+      "ransac_iterations": 67,
+      "rmse_px": 0.2581475476665455,
+      "rotation_error_deg": 0.2628172443366724,
+      "rotation_sigma_deg": [
+        0.01640477666360117,
+        0.014355715589329673,
+        0.012248144276340902
+      ],
+      "seconds": 0.078,
+      "solved": true,
+      "translation_error_mm": 5.811173247206457
+    },
+    {
+      "converged": false,
+      "correspondences": 100,
+      "frame": 122,
+      "inlier_ratio": 0.03,
+      "inliers": 3,
+      "iterations": 0,
+      "position_sigma_mm": null,
+      "ransac_iterations": 600,
+      "rmse_px": NaN,
+      "rotation_sigma_deg": null,
+      "seconds": 0.638,
+      "solved": false
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 427,
+      "frame": 123,
+      "inlier_ratio": 0.6885245901639344,
+      "inliers": 294,
+      "inliers_per_camera": {
+        "0": 75,
+        "1": 74,
+        "2": 49,
+        "3": 96
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.013610220891439873,
+        0.01053731469435235,
+        0.011742547276838931
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.4017234738172839,
+      "rotation_error_deg": 0.18737594563001067,
+      "rotation_sigma_deg": [
+        0.01640712515673024,
+        0.012756855107020038,
+        0.01287916650573722
+      ],
+      "seconds": 0.061,
+      "solved": true,
+      "translation_error_mm": 1.765109841225974
+    },
+    {
+      "cameras_used": 2,
+      "converged": true,
+      "correspondences": 548,
+      "frame": 124,
+      "inlier_ratio": 0.7864963503649635,
+      "inliers": 431,
+      "inliers_per_camera": {
+        "0": 272,
+        "1": 159,
+        "2": 0,
+        "3": 0
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.006184984753861801,
+        0.027226414061361382,
+        0.005442540820142671
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3117676351072992,
+      "rotation_error_deg": 0.392128118372744,
+      "rotation_sigma_deg": [
+        0.017990498898190706,
+        0.007944190307482153,
+        0.014974607040955504
+      ],
+      "seconds": 0.063,
+      "solved": true,
+      "translation_error_mm": 5.14741927442207
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 300,
+      "frame": 125,
+      "inlier_ratio": 0.6066666666666667,
+      "inliers": 182,
+      "inliers_per_camera": {
+        "0": 57,
+        "1": 37,
+        "2": 35,
+        "3": 53
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.016879509994763415,
+        0.011155909088478149,
+        0.01519957704132908
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3533954491233204,
+      "rotation_error_deg": 0.14692998637365431,
+      "rotation_sigma_deg": [
+        0.02230999122480184,
+        0.01631640769174579,
+        0.014711360781556474
+      ],
+      "seconds": 0.052,
+      "solved": true,
+      "translation_error_mm": 1.1694400279020742
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 200,
+      "frame": 126,
+      "inlier_ratio": 0.405,
+      "inliers": 81,
+      "inliers_per_camera": {
+        "0": 0,
+        "1": 8,
+        "2": 30,
+        "3": 43
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.03876126658004483,
+        0.03373438662479462,
+        0.021905706606994712
+      ],
+      "ransac_iterations": 133,
+      "rmse_px": 0.2986690077871312,
+      "rotation_error_deg": 0.14834521501221443,
+      "rotation_sigma_deg": [
+        0.02535875248870124,
+        0.02482552464841107,
+        0.024665921255423946
+      ],
+      "seconds": 0.158,
+      "solved": true,
+      "translation_error_mm": 4.8872152688663
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 533,
+      "frame": 127,
+      "inlier_ratio": 0.7223264540337712,
+      "inliers": 385,
+      "inliers_per_camera": {
+        "0": 3,
+        "1": 69,
+        "2": 146,
+        "3": 167
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.0123435313801974,
+        0.01734511477808003,
+        0.009956650136978145
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3736836046269436,
+      "rotation_error_deg": 0.15643624470560707,
+      "rotation_sigma_deg": [
+        0.02068544045535558,
+        0.011455778238441319,
+        0.014911640055670703
+      ],
+      "seconds": 0.064,
+      "solved": true,
+      "translation_error_mm": 5.482113052481146
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 669,
+      "frame": 128,
+      "inlier_ratio": 0.7772795216741405,
+      "inliers": 520,
+      "inliers_per_camera": {
+        "0": 223,
+        "1": 206,
+        "2": 88,
+        "3": 3
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.009771564918626349,
+        0.014393372443999635,
+        0.01132545985474668
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.3523820781789438,
+      "rotation_error_deg": 0.28464298507779384,
+      "rotation_sigma_deg": [
+        0.025258831002920784,
+        0.008317651348961046,
+        0.01877987752908151
+      ],
+      "seconds": 0.063,
+      "solved": true,
+      "translation_error_mm": 3.2460959256179467
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 422,
+      "frame": 129,
+      "inlier_ratio": 0.6658767772511849,
+      "inliers": 281,
+      "inliers_per_camera": {
+        "0": 133,
+        "1": 51,
+        "2": 55,
+        "3": 42
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.018423331201241178,
+        0.01786640989545468,
+        0.01267036176029557
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.4793402321282296,
+      "rotation_error_deg": 0.06748053154245051,
+      "rotation_sigma_deg": [
+        0.02272655601723409,
+        0.015417066678571229,
+        0.017683296816023746
+      ],
+      "seconds": 0.071,
+      "solved": true,
+      "translation_error_mm": 1.985351396188446
+    },
+    {
+      "cameras_used": 2,
+      "converged": true,
+      "correspondences": 168,
+      "frame": 130,
+      "inlier_ratio": 0.27976190476190477,
+      "inliers": 47,
+      "inliers_per_camera": {
+        "0": 40,
+        "1": 7,
+        "2": 0,
+        "3": 0
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.05776908941781112,
+        0.026264355173587526,
+        0.022505935213627863
+      ],
+      "ransac_iterations": 416,
+      "rmse_px": 0.22062055314436754,
+      "rotation_error_deg": 0.3458267148874695,
+      "rotation_sigma_deg": [
+        0.023280657333759034,
+        0.025616344060048212,
+        0.024680614804520655
+      ],
+      "seconds": 0.471,
+      "solved": true,
+      "translation_error_mm": 4.183391824271206
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 261,
+      "frame": 131,
+      "inlier_ratio": 0.5325670498084292,
+      "inliers": 139,
+      "inliers_per_camera": {
+        "0": 66,
+        "1": 51,
+        "2": 20,
+        "3": 2
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.0281152377907014,
+        0.014132035594167484,
+        0.016254280556842422
+      ],
+      "ransac_iterations": 56,
+      "rmse_px": 0.3132906061216706,
+      "rotation_error_deg": 0.44506101700951234,
+      "rotation_sigma_deg": [
+        0.014594285052491947,
+        0.01635656248920008,
+        0.013213550551636422
+      ],
+      "seconds": 0.06,
+      "solved": true,
+      "translation_error_mm": 3.4424437834318486
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 283,
+      "frame": 132,
+      "inlier_ratio": 0.5229681978798587,
+      "inliers": 148,
+      "inliers_per_camera": {
+        "0": 28,
+        "1": 70,
+        "2": 50,
+        "3": 0
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.036223598799730174,
+        0.021534621669311957,
+        0.0194635391274372
+      ],
+      "ransac_iterations": 59,
+      "rmse_px": 0.3887432095614038,
+      "rotation_error_deg": 0.3827405738672549,
+      "rotation_sigma_deg": [
+        0.021502972580064405,
+        0.01927234139158509,
+        0.017368222043201348
+      ],
+      "seconds": 0.073,
+      "solved": true,
+      "translation_error_mm": 5.929893387574548
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 357,
+      "frame": 133,
+      "inlier_ratio": 0.5630252100840336,
+      "inliers": 201,
+      "inliers_per_camera": {
+        "0": 48,
+        "1": 55,
+        "2": 68,
+        "3": 30
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.02057781674580635,
+        0.01687667317148368,
+        0.017703048557326528
+      ],
+      "ransac_iterations": 46,
+      "rmse_px": 0.4417398157346071,
+      "rotation_error_deg": 0.39732354594514446,
+      "rotation_sigma_deg": [
+        0.017887801650119283,
+        0.01658866207374315,
+        0.015468641296832647
+      ],
+      "seconds": 0.062,
+      "solved": true,
+      "translation_error_mm": 5.830272671331224
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 380,
+      "frame": 134,
+      "inlier_ratio": 0.6894736842105263,
+      "inliers": 262,
+      "inliers_per_camera": {
+        "0": 130,
+        "1": 27,
+        "2": 51,
+        "3": 54
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.01805409070055712,
+        0.018677226183103367,
+        0.01329920808793906
+      ],
+      "ransac_iterations": 40,
+      "rmse_px": 0.5069042870606647,
+      "rotation_error_deg": 0.04034458703042822,
+      "rotation_sigma_deg": [
+        0.024834296111420937,
+        0.016605260742465537,
+        0.01925592949913573
+      ],
+      "seconds": 0.063,
+      "solved": true,
+      "translation_error_mm": 2.406381830319721
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 171,
+      "frame": 135,
+      "inlier_ratio": 0.3567251461988304,
+      "inliers": 61,
+      "inliers_per_camera": {
+        "0": 5,
+        "1": 7,
+        "2": 5,
+        "3": 44
+      },
+      "iterations": 4,
+      "position_sigma_mm": [
+        0.07648944842887925,
+        0.08980964120972722,
+        0.04340481659999838
+      ],
+      "ransac_iterations": 198,
+      "rmse_px": 0.6814898502020011,
+      "rotation_error_deg": 0.3871007432563014,
+      "rotation_sigma_deg": [
+        0.11026006078540465,
+        0.046820773239032464,
+        0.061634875902261584
+      ],
+      "seconds": 0.237,
+      "solved": true,
+      "translation_error_mm": 3.2434200884996116
+    },
+    {
+      "cameras_used": 3,
+      "converged": true,
+      "correspondences": 256,
+      "frame": 136,
+      "inlier_ratio": 0.48828125,
+      "inliers": 125,
+      "inliers_per_camera": {
+        "0": 56,
+        "1": 60,
+        "2": 9,
+        "3": 0
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.02249597153175717,
+        0.008806811925942086,
+        0.010494984403664998
+      ],
+      "ransac_iterations": 74,
+      "rmse_px": 0.22109774692396933,
+      "rotation_error_deg": 0.3770169134099838,
+      "rotation_sigma_deg": [
+        0.012385310710174652,
+        0.011739916134185544,
+        0.009569269167457015
+      ],
+      "seconds": 0.101,
+      "solved": true,
+      "translation_error_mm": 5.810800536303313
+    },
+    {
+      "cameras_used": 1,
+      "converged": true,
+      "correspondences": 154,
+      "frame": 137,
+      "inlier_ratio": 0.16883116883116883,
+      "inliers": 26,
+      "inliers_per_camera": {
+        "0": 26,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      },
+      "iterations": 5,
+      "position_sigma_mm": [
+        0.5364756015525042,
+        1.1123153809850703,
+        0.6641727612243743
+      ],
+      "ransac_iterations": 600,
+      "rmse_px": 0.4059556352601218,
+      "rotation_error_deg": 0.890386805862672,
+      "rotation_sigma_deg": [
+        0.2748733880692591,
+        0.11384494025098374,
+        0.2075280875995258
+      ],
+      "seconds": 0.649,
+      "solved": true,
+      "translation_error_mm": 6.974816969850185
+    },
+    {
+      "cameras_used": 4,
+      "converged": true,
+      "correspondences": 288,
+      "frame": 138,
+      "inlier_ratio": 0.4652777777777778,
+      "inliers": 134,
+      "inliers_per_camera": {
+        "0": 24,
+        "1": 53,
+        "2": 50,
+        "3": 7
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.027837267869809525,
+        0.014061338473442707,
+        0.017863779541959744
+      ],
+      "ransac_iterations": 86,
+      "rmse_px": 0.346194448475779,
+      "rotation_error_deg": 0.3667268689503588,
+      "rotation_sigma_deg": [
+        0.02248069355683484,
+        0.019780155216586978,
+        0.01451416837969159
+      ],
+      "seconds": 0.104,
+      "solved": true,
+      "translation_error_mm": 5.5727927208246335
+    },
+    {
+      "cameras_used": 2,
+      "converged": true,
+      "correspondences": 296,
+      "frame": 139,
+      "inlier_ratio": 0.3141891891891892,
+      "inliers": 93,
+      "inliers_per_camera": {
+        "0": 0,
+        "1": 0,
+        "2": 1,
+        "3": 92
+      },
+      "iterations": 3,
+      "position_sigma_mm": [
+        0.07651028937939773,
+        0.16257644975481522,
+        0.16582883759643594
+      ],
+      "ransac_iterations": 292,
+      "rmse_px": 0.42114845875837437,
+      "rotation_error_deg": 0.25719266409061137,
+      "rotation_sigma_deg": [
+        0.06587191033815244,
+        0.03829114883399911,
+        0.04560651415926597
+      ],
+      "seconds": 0.366,
+      "solved": true,
+      "translation_error_mm": 4.300671436575812
+    }
+  ],
+  "seconds": 40.17,
+  "settings": {
+    "contrast": 0.025,
+    "ratio": 0.8,
+    "surface_mm": 4.0,
+    "threshold_px": 3.0
+  },
+  "split": "test",
+  "tag": "pose_classical",
+  "versions": {
+    "cv2": "5.0.0",
+    "numpy": "2.5.2",
+    "open3d": "0.19.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "pycolmap": "4.1.1",
+    "python": "3.12.0",
+    "scipy": "1.18.1",
+    "torch": "2.5.1+cu121"
+  }
+}

@@ -1,0 +1,362 @@
+{
+  "board": {
+    "corners": 24,
+    "square_length_m": 0.02500000037252903,
+    "squares": [
+      7,
+      5
+    ]
+  },
+  "commit": "5e80cc8",
+  "dataset": "data/turntable",
+  "extrinsic_errors": [
+    {
+      "baseline_mm": 0.0,
+      "camera": 0,
+      "cx_error_px": 1.7317442839281512,
+      "cy_error_px": 7.844522410621948,
+      "dist_error_max": 4.467695004663415,
+      "fx_error_px": -0.10617353655720763,
+      "fy_error_px": 0.3228514802704012,
+      "rotation_error_deg": 0.0,
+      "translation_error_mm": 0.0
+    },
+    {
+      "baseline_mm": 262.6844789784848,
+      "camera": 1,
+      "cx_error_px": 5.885684496585839,
+      "cy_error_px": 3.4017643745414716,
+      "dist_error_max": 0.7024748531248302,
+      "fx_error_px": -2.3225057488180028,
+      "fy_error_px": -3.631445404851547,
+      "rotation_error_deg": 0.3133085589847559,
+      "translation_error_mm": 2.5327375641274252
+    },
+    {
+      "baseline_mm": 511.2975844997351,
+      "camera": 2,
+      "cx_error_px": 3.8994684112080904,
+      "cy_error_px": 4.8787463174051595,
+      "dist_error_max": 3.793755038114601,
+      "fx_error_px": 5.578256886198915,
+      "fy_error_px": 5.31195742752152,
+      "rotation_error_deg": 0.3317604930847057,
+      "translation_error_mm": 0.5906529603298921
+    },
+    {
+      "baseline_mm": 746.8664909732237,
+      "camera": 3,
+      "cx_error_px": -1.2357529508606717,
+      "cy_error_px": 3.3760205919794544,
+      "dist_error_max": 4.265607996611705,
+      "fx_error_px": -0.71439406565014,
+      "fy_error_px": -0.1537666294148039,
+      "rotation_error_deg": 0.2889071410908327,
+      "translation_error_mm": 1.6449444612540454
+    }
+  ],
+  "extrinsic_errors_joint_intrinsics": [
+    {
+      "baseline_mm": 0.0,
+      "camera": 0,
+      "cx_error_px": -4.858070254880715,
+      "cy_error_px": 1.8816162040374707,
+      "dist_error_max": 5.818949384446273,
+      "fx_error_px": -4.410825501642648,
+      "fy_error_px": -4.04368190923492,
+      "rotation_error_deg": 0.0,
+      "translation_error_mm": 0.0
+    },
+    {
+      "baseline_mm": 262.6844789784848,
+      "camera": 1,
+      "cx_error_px": -2.228584569344548,
+      "cy_error_px": 1.5431815014624135,
+      "dist_error_max": 7.110163347079539,
+      "fx_error_px": -1.12566329925221,
+      "fy_error_px": -0.9305373995553055,
+      "rotation_error_deg": 0.13295718237334847,
+      "translation_error_mm": 1.7978841071753184
+    },
+    {
+      "baseline_mm": 511.2975844997351,
+      "camera": 2,
+      "cx_error_px": -2.6374837473722437,
+      "cy_error_px": 2.372494980683541,
+      "dist_error_max": 13.19172363668492,
+      "fx_error_px": 0.43952196169175295,
+      "fy_error_px": 0.5649577893359492,
+      "rotation_error_deg": 0.16083128570377572,
+      "translation_error_mm": 2.8228086314208056
+    },
+    {
+      "baseline_mm": 746.8664909732237,
+      "camera": 3,
+      "cx_error_px": -8.521922830823257,
+      "cy_error_px": 5.970466851872686,
+      "dist_error_max": 12.05709384083276,
+      "fx_error_px": 2.8277609689773726,
+      "fy_error_px": 2.7353548790024433,
+      "rotation_error_deg": 0.33690129113185374,
+      "translation_error_mm": 6.304497364631292
+    }
+  ],
+  "extrinsics": {
+    "baselines_mm": [
+      0.0,
+      261.74946393257767,
+      510.8668060851582,
+      745.4092192935975
+    ],
+    "cameras": 4,
+    "frames": 26,
+    "initial_rmse_px": 0.27284521258478184,
+    "lm_converged": true,
+    "lm_iterations": 5,
+    "lm_reason": "ftol",
+    "max_px": 3.9034123189427907,
+    "observations": 2030,
+    "pairwise_counts": {
+      "0-1": 24,
+      "0-2": 23,
+      "0-3": 21,
+      "1-2": 24,
+      "1-3": 22,
+      "2-3": 23
+    },
+    "pairwise_spread_mm": {
+      "0-1": 1.9995897146923547,
+      "0-2": 1.5981512031813399,
+      "0-3": 2.607688511937202,
+      "1-2": 1.66072117331181,
+      "1-3": 2.6807174631116912,
+      "2-3": 2.5273439561136204
+    },
+    "per_camera_rmse_px": {
+      "0": 0.19478621294680484,
+      "1": 0.07570676506673013,
+      "2": 0.0821868966610239,
+      "3": 0.20700098156792893
+    },
+    "rmse_px": 0.150708855021249
+  },
+  "extrinsics_joint_intrinsics": {
+    "baselines_mm": [
+      0.0,
+      261.72814804182946,
+      509.80787379263745,
+      745.3905944597731
+    ],
+    "cameras": 4,
+    "frames": 26,
+    "initial_rmse_px": 0.27284521258478184,
+    "lm_converged": true,
+    "lm_iterations": 11,
+    "lm_reason": "ftol",
+    "max_px": 3.8703305964027273,
+    "observations": 2030,
+    "pairwise_counts": {
+      "0-1": 24,
+      "0-2": 23,
+      "0-3": 21,
+      "1-2": 24,
+      "1-3": 22,
+      "2-3": 23
+    },
+    "pairwise_spread_mm": {
+      "0-1": 1.9995897146923547,
+      "0-2": 1.5981512031813399,
+      "0-3": 2.607688511937202,
+      "1-2": 1.66072117331181,
+      "1-3": 2.6807174631116912,
+      "2-3": 2.5273439561136204
+    },
+    "per_camera_rmse_px": {
+      "0": 0.192123250674116,
+      "1": 0.06557384406337938,
+      "2": 0.06658967474724203,
+      "3": 0.2016348219125236
+    },
+    "rmse_px": 0.1448020182083449
+  },
+  "extrinsics_seconds": 4.26,
+  "headline": {
+    "extrinsic_max_rotation_error_deg": 0.3317604930847057,
+    "extrinsic_max_translation_error_mm": 2.5327375641274252,
+    "extrinsic_rmse_px": 0.150708855021249,
+    "intrinsic_max_focal_error_px": 5.578256886198915,
+    "intrinsic_rmse_px": 0.09050194957252694,
+    "opencv_max_focal_disagreement_px": 4.195583869659458e-05
+  },
+  "intrinsic_errors": [
+    {
+      "camera": 0,
+      "cx_error_px": 1.7317442839281512,
+      "cy_error_px": 7.844522410621948,
+      "dist_error_max": 4.467695004663415,
+      "fx_error_px": -0.10617353655720763,
+      "fy_error_px": 0.3228514802704012
+    },
+    {
+      "camera": 1,
+      "cx_error_px": 5.885684496585839,
+      "cy_error_px": 3.4017643745414716,
+      "dist_error_max": 0.7024748531248302,
+      "fx_error_px": -2.3225057488180028,
+      "fy_error_px": -3.631445404851547
+    },
+    {
+      "camera": 2,
+      "cx_error_px": 3.8994684112080904,
+      "cy_error_px": 4.8787463174051595,
+      "dist_error_max": 3.793755038114601,
+      "fx_error_px": 5.578256886198915,
+      "fy_error_px": 5.31195742752152
+    },
+    {
+      "camera": 3,
+      "cx_error_px": -1.2357529508606717,
+      "cy_error_px": 3.3760205919794544,
+      "dist_error_max": 4.265607996611705,
+      "fx_error_px": -0.71439406565014,
+      "fy_error_px": -0.1537666294148039
+    }
+  ],
+  "intrinsics": [
+    {
+      "camera": "cam0",
+      "corners": 528,
+      "cx": 410.0871989765725,
+      "cy": 305.6632906676196,
+      "dist": [
+        -0.29604213118649125,
+        0.615067079738841,
+        0.0008905102045644977,
+        -0.000992603586589327,
+        -4.480931551308106
+      ],
+      "fx": 1395.830752229334,
+      "fy": 1398.2769101155245,
+      "linear_rmse_px": 3.3285629742180403,
+      "linear_skew_px": 13.30431254372687,
+      "lm_converged": true,
+      "lm_iterations": 16,
+      "lm_reason": "ftol",
+      "max_px": 0.8859434244495108,
+      "opencv_centre_diff_px": 1.1802390076809388e-05,
+      "opencv_cx": 410.08720893218043,
+      "opencv_cy": 305.6633024700097,
+      "opencv_dist_diff_max": 1.884991758238641e-06,
+      "opencv_focal_diff_px": 1.181663037641556e-06,
+      "opencv_fx": 1395.830753410997,
+      "opencv_fy": 1398.2769111426287,
+      "opencv_rms_px": 0.13070304671627672,
+      "rmse_px": 0.09242101065482282,
+      "views": 22
+    },
+    {
+      "camera": "cam1",
+      "corners": 528,
+      "cx": 410.5192666784708,
+      "cy": 303.08563285408985,
+      "dist": [
+        -0.3003570662963498,
+        0.19371932795242722,
+        0.00020458349818971804,
+        -5.465245301103501e-05,
+        -0.7133038414230612
+      ],
+      "fx": 1408.0860472822765,
+      "fy": 1406.801713365214,
+      "linear_rmse_px": 3.24211142376253,
+      "linear_skew_px": 13.344958369312767,
+      "lm_converged": true,
+      "lm_iterations": 17,
+      "lm_reason": "ftol",
+      "max_px": 0.8112955936595614,
+      "opencv_centre_diff_px": 0.0002073925119816522,
+      "opencv_cx": 410.51947407098277,
+      "opencv_cy": 303.085657163227,
+      "opencv_dist_diff_max": 0.00014724500750729064,
+      "opencv_focal_diff_px": 4.195583869659458e-05,
+      "opencv_fx": 1408.0860072112748,
+      "opencv_fy": 1406.8016714093753,
+      "opencv_rms_px": 0.11335225343794429,
+      "rmse_px": 0.08015214706881825,
+      "views": 22
+    },
+    {
+      "camera": "cam2",
+      "corners": 528,
+      "cx": 401.75843248963645,
+      "cy": 306.1798501431456,
+      "dist": [
+        -0.2857556799236518,
+        0.7007179529268996,
+        0.0008243027620672649,
+        -0.0008637241054302059,
+        -3.805973176959427
+      ],
+      "fx": 1388.19352354561,
+      "fy": 1388.7198410990286,
+      "linear_rmse_px": 2.4354446116777724,
+      "linear_skew_px": -12.825725709245356,
+      "lm_converged": true,
+      "lm_iterations": 13,
+      "lm_reason": "ftol",
+      "max_px": 0.8315540206614085,
+      "opencv_centre_diff_px": 3.9807292864679766e-05,
+      "opencv_cx": 401.7583926823436,
+      "opencv_cy": 306.1798311756552,
+      "opencv_dist_diff_max": 1.8826483407785588e-05,
+      "opencv_focal_diff_px": 1.563049181640963e-06,
+      "opencv_fx": 1388.1935234861442,
+      "opencv_fy": 1388.7198395359794,
+      "opencv_rms_px": 0.11379306311599399,
+      "rmse_px": 0.0804638465813162,
+      "views": 22
+    },
+    {
+      "camera": "cam3",
+      "corners": 528,
+      "cx": 398.15667082326854,
+      "cy": 305.1539930108343,
+      "dist": [
+        -0.27915040242684114,
+        -0.3476475467719137,
+        -0.0002798594702167264,
+        -0.0010552184986780523,
+        4.253383661488268
+      ],
+      "fx": 1394.6297259765427,
+      "fy": 1396.3581191527471,
+      "linear_rmse_px": 3.476962243589974,
+      "linear_skew_px": -11.60871526878336,
+      "lm_converged": true,
+      "lm_iterations": 18,
+      "lm_reason": "ftol",
+      "max_px": 1.1980812136910792,
+      "opencv_centre_diff_px": 4.9561450168766896e-05,
+      "opencv_cx": 398.1566212618184,
+      "opencv_cy": 305.15401061085106,
+      "opencv_dist_diff_max": 2.0912558991170727e-05,
+      "opencv_focal_diff_px": 1.1724181604222395e-05,
+      "opencv_fx": 1394.629714381446,
+      "opencv_fy": 1396.3581074285655,
+      "opencv_rms_px": 0.1541079747563548,
+      "rmse_px": 0.10897079398515055,
+      "views": 22
+    }
+  ],
+  "intrinsics_seconds": 8.19,
+  "versions": {
+    "cv2": "5.0.0",
+    "numpy": "2.5.2",
+    "open3d": "0.19.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "pycolmap": "4.1.1",
+    "python": "3.12.0",
+    "scipy": "1.18.1",
+    "torch": "2.5.1+cu121"
+  }
+}

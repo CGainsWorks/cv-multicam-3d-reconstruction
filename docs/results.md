@@ -32,7 +32,13 @@ truth** is what you would not. A calibration can have an excellent residual and
 be wrong, and that is the normal failure mode rather than an exotic one.
 
 <!-- table:calibration -->
-_Not generated yet: run `make experiments`._
+| camera | views | intrinsic RMS (px) | fx error (px) | cx error (px) | cy error (px) | baseline (mm) | extrinsic error (mm) | extrinsic error (deg) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `cam0` | 22 | 0.0924 | -0.11 | +1.73 | +7.84 | 0.0 | 0.00 | 0.000 |
+| `cam1` | 22 | 0.0802 | -2.32 | +5.89 | +3.40 | 262.7 | 2.53 | 0.313 |
+| `cam2` | 22 | 0.0805 | +5.58 | +3.90 | +4.88 | 511.3 | 0.59 | 0.332 |
+| `cam3` | 22 | 0.1090 | -0.71 | -1.24 | +3.38 | 746.9 | 1.64 | 0.289 |
+| **rig** | 26 stations | **0.1507** | | | | | **2.53 max** | **0.332 max** |
 <!-- /table:calibration -->
 
 ![calibration](plots/calibration.png)
@@ -69,7 +75,10 @@ calibration's — rather than shape, which is the reconstruction's. Both are in
 `results/sparse.json` under `cad_registration_icp`.
 
 <!-- table:reconstruction -->
-_Not generated yet: run `make experiments`._
+| stage | points on the part | median (mm) | mean (mm) | 90th pct (mm) | RMS (mm) | completeness |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| sparse | 1255 | **0.356** | 0.560 | 1.157 | 0.801 | 31.3% at 3 mm |
+| dense | 53018 | **1.361** | 1.942 | 4.241 | 2.518 | 24.9% at 1 mm |
 <!-- /table:reconstruction -->
 
 ![reconstruction](plots/reconstruction.png)
@@ -119,19 +128,47 @@ full rotation group, not from the single axis the turntable sweep used, which is
 what separates a pose estimator from a turntable-angle estimator.
 
 <!-- table:pose -->
-_Not generated yet: run `make experiments`._
+| metric | median | mean | 90th percentile |
+| --- | ---: | ---: | ---: |
+| translation (mm) | **3.800** | 4.130 | 6.066 |
+| rotation (deg) | **0.2924** | 0.3053 | 0.4704 |
+| ADD (mm) | **3.803** | 4.138 | 6.060 |
+| ADD-S (mm) | **3.124** | 3.089 | 4.305 |
+
+| recall | ADD | ADD-S |
+| --- | ---: | ---: |
+| within 2% of diameter (3.7 mm) | 45.0% | 67.5% |
+| within 5% of diameter (9.4 mm) | 97.5% | 97.5% |
+| within 10% of diameter (18.7 mm) | 97.5% | 97.5% |
+| within 1 mm | 2.5% | -- |
+
+40 stations, 39 solved, 1 refused.
 <!-- /table:pose -->
 
 ![pose](plots/pose.png)
 
-**Read the median and the 90th percentile together.** A model-based pose
-estimator on a weakly asymmetric part has a bimodal error distribution: most
-frames land within a fraction of a degree, and a few land on a symmetry-related
-alternative. The median describes the first group and says nothing about the
-second. The recall rows are the honest summary, and failures — frames where the
-estimator refused to answer — are counted in the denominator rather than dropped,
-because an estimator that declines the hard cases and is perfect on the rest is
-not a better estimator.
+**The rotation is excellent and the translation is not, and that is a
+calibration result rather than a pose result.** The orientation is recovered to
+0.29 degrees at the median and 0.47 at the 90th percentile — unimodal, with no
+symmetry-related failures left once the texture artefact described in
+[limitations §3a](limitations.md#3a-one-near-symmetry-was-an-artefact-and-it-cost-six-frames)
+was fixed. The translation sits at 3.8 mm.
+
+That asymmetry is the signature of a rig-scale error, not of a bad estimator. A
+rig whose baselines are wrong by a fraction `e` produces poses displaced by `e`
+times the stand-off, and leaves the orientation alone. The extrinsics here are
+good to 2.5 mm on a 747 mm baseline, which is about 0.34 per cent; 0.34 per cent
+of the 0.66 m stand-off is 2.2 mm, the same order as the 3.8 mm observed. The
+way to improve this number is to calibrate better, not to refine harder — which
+is also what the ablation found when it tried refining harder.
+
+**Read the recall rows, not the median.** Recall at 2 per cent of the diameter
+is a 3.7 mm bar and the median error is 3.8 mm, so that row sits exactly on the
+knife edge and swings wildly for reasons that have nothing to do with the
+estimator; at 5 per cent it is 97.5 per cent. Failures — frames where the
+estimator refused to answer — are counted in the denominator rather than
+dropped, because an estimator that declines the hard cases and is perfect on the
+rest is not a better estimator.
 
 ---
 
@@ -145,7 +182,12 @@ Classical alone against classical followed by the network. This is the question
 the brief asks and the one that decides whether the network ships.
 
 <!-- table:ablation -->
-_Not generated yet: run `make experiments`._
+| configuration | median ADD (mm) | median translation (mm) | median rotation (deg) | recall at 2% of diameter |
+| --- | ---: | ---: | ---: | ---: |
+| classical alone | 3.803 | 3.800 | 0.2924 | 45.0% |
+| classical + network | 3.882 | 3.855 | 0.3436 | 47.5% |
+
+The network **does not improve** ADD; it is 0.079 mm worse, at 145 ms per station on cuda.
 <!-- /table:ablation -->
 
 ### B. The same question, controlled
@@ -156,7 +198,14 @@ correct". So both refiners are started from the **same** deliberately perturbed
 pose, on the same correspondences, across four magnitude bands.
 
 <!-- table:head_to_head -->
-_Not generated yet: run `make experiments`._
+| perturbation applied | start | classical LM | network | better |
+| --- | ---: | ---: | ---: | --- |
+| 0.5 mm / 0.3 deg | 0.533 | **0.539** | 0.971 | classical |
+| 2 mm / 1 deg | 2.084 | **2.190** | 2.285 | classical |
+| 5 mm / 3 deg | 5.331 | **4.021** | 5.400 | classical |
+| 12 mm / 6 deg | 12.495 | **3.872** | 12.368 | classical |
+
+Median ADD in mm, same perturbed starting pose for both refiners.
 <!-- /table:head_to_head -->
 
 ### C. How many iterations
@@ -221,7 +270,11 @@ one. Reported because it is honest, not because it is good: none of this is
 optimised for latency.
 
 <!-- table:timing -->
-_Not generated yet: run `make experiments`._
+| stage | wall clock | what it does |
+| --- | ---: | --- |
+| `make reconstruct` | 127 s | features, tracks, bundle adjustment |
+| `make dense` | 279 s | plane sweep, fusion, meshing |
+| `make pose` | 40 s | generalised PnP on the held-out stations |
 <!-- /table:timing -->
 
 Rendering the capture dominates everything else and is a one-off: about twenty

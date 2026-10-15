@@ -322,3 +322,49 @@ def test_perturbation_covers_its_whole_range(rng):
     magnitudes = np.asarray(magnitudes)
     assert magnitudes.min() < 0.0006, "no easy samples were drawn"
     assert magnitudes.max() > 0.010, "no hard samples were drawn"
+
+
+def test_numpy_and_torch_corrections_agree(rng):
+    """Training composes the twist in torch; inference composes it in NumPy.
+
+    If the two ever disagree the refiner works in training and not in use, and
+    nothing in either half would say so.
+    """
+    torch = pytest.importorskip("torch")
+    from multicam.pose.network import apply_correction_torch
+    from multicam.pose.refine import apply_correction
+
+    centroid = np.array([0.004, -0.002, 0.011])
+    for _ in range(8):
+        T = se3.exp(rng.normal(size=6) * 0.4)
+        twist = rng.normal(size=6) * 0.02
+        ours = apply_correction(T, twist, centroid)
+        theirs = apply_correction_torch(
+            torch.from_numpy(T[None]), torch.from_numpy(twist[None]),
+            torch.from_numpy(centroid),
+        ).numpy()[0]
+        assert np.allclose(ours, theirs, atol=1e-12)
+
+
+def test_correction_rotates_about_the_object_not_the_rig_origin(rng):
+    """A pure rotation must leave the object's centre where it was.
+
+    This is the property that makes the twist learnable from camera crops: if
+    the rotation were about the rig origin 0.6 m away, one degree would drag
+    the part 10 mm sideways and the network would have to untangle a lever arm
+    that changes with where the part is standing.
+    """
+    from multicam.pose.refine import apply_correction
+
+    centroid = np.array([0.003, 0.001, -0.004])
+    T = se3.from_Rt(so3.exp([0.3, -0.2, 0.7]), [0.02, -0.03, 0.62])
+    before = T[:3, :3] @ centroid + T[:3, 3]
+
+    twist = np.array([0.0, 0.0, 0.0, 0.0, 0.0, np.radians(5.0)])
+    after_T = apply_correction(T, twist, centroid)
+    after = after_T[:3, :3] @ centroid + after_T[:3, 3]
+
+    assert np.allclose(before, after, atol=1e-12), (before, after)
+    # And it really did rotate by five degrees.
+    _, rot = se3.pose_error(after_T, T)
+    assert np.isclose(rot, 5.0, atol=1e-9)

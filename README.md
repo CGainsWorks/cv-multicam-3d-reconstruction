@@ -22,7 +22,7 @@ truth exact, which is the only reason a calibration can be scored against the
 rig it was trying to recover rather than merely against its own residual.
 
 <!-- table:headline -->
-_Not generated yet: run `make experiments`._
+The rig calibrates to **0.151 px** of reprojection residual and to within **2.53 mm** of its true geometry on a 747 mm baseline. The part reconstructs to a median of **0.36 mm** from its CAD surface. 6-DoF pose on held-out stations is **3.80 mm** and **0.292 deg** at the median.
 <!-- /table:headline -->
 
 ### What it looks like
@@ -30,7 +30,7 @@ _Not generated yet: run `make experiments`._
 | | |
 | --- | --- |
 | ![summary](docs/plots/summary.png) | **Error through the pipeline, and what the ablation decided.** Left: the error at each stage, from the rig's extrinsics through the sparse and dense reconstructions to the final pose. Middle: how much of the part's surface each stage actually covers, which is the number that accuracy alone hides. Right: the ablation the whole repository is built around. |
-| ![reconstruction](docs/plots/reconstruction.png) | **The part is whatever moves.** Right-hand panel: every rigid motion the cross-station alignment found. The static group is the background, and it is the *larger* one, so selecting by size reconstructs the room. Selecting the group that moves reconstructs the part, and nothing linked a background point across two stations. |
+| ![reconstruction](docs/plots/reconstruction.png) | **The part is whatever moves.** Right-hand panel: every rigid motion the cross-station alignment found. The orange cluster at zero rotation is the room, and it is discarded however large it is. With this lens the moving group is the larger one on 31 of 34 edges, so a single RANSAC would mostly get away with it; with the 58-degree lens tried first it was outnumbered twenty to one and the pipeline reconstructed the room. Which group is larger is a property of the lens, not of the algorithm, which is the reason not to select by size. |
 
 ---
 
@@ -48,7 +48,7 @@ _Not generated yet: run `make experiments`._
 | **Reference** | COLMAP, through `pycolmap`, on identical images. It shares no code with any of the above |
 | **Evaluation** | Reprojection residuals, point-to-surface distance to CAD, completeness, chamfer, ADD and ADD-S with recall at several thresholds, and per-class labelling so the fixture is not scored as the part |
 | **Simulator** | A z-buffered rasteriser with near-plane clipping, perspective-correct interpolation and physically correct lens distortion, plus the rig, the scene and the capture planner |
-| **Tests** | 131, including every Jacobian against finite differences, the renderer against the projection equations, the bundle adjuster against a known answer, and a firewall test that fails if any pipeline module so much as names a ground-truth accessor |
+| **Tests** | 135, including every Jacobian against finite differences, the renderer against the projection equations, the bundle adjuster against a known answer, and a firewall test that fails if any pipeline module so much as names a ground-truth accessor |
 
 ---
 
@@ -93,7 +93,13 @@ against truth is what you would not, and the gap between them is the point: a
 calibration can have a beautiful residual and be wrong.
 
 <!-- table:calibration -->
-_Not generated yet: run `make experiments`._
+| camera | views | intrinsic RMS (px) | fx error (px) | cx error (px) | cy error (px) | baseline (mm) | extrinsic error (mm) | extrinsic error (deg) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `cam0` | 22 | 0.0924 | -0.11 | +1.73 | +7.84 | 0.0 | 0.00 | 0.000 |
+| `cam1` | 22 | 0.0802 | -2.32 | +5.89 | +3.40 | 262.7 | 2.53 | 0.313 |
+| `cam2` | 22 | 0.0805 | +5.58 | +3.90 | +4.88 | 511.3 | 0.59 | 0.332 |
+| `cam3` | 22 | 0.1090 | -0.71 | -1.24 | +3.38 | 746.9 | 1.64 | 0.289 |
+| **rig** | 26 stations | **0.1507** | | | | | **2.53 max** | **0.332 max** |
 <!-- /table:calibration -->
 
 ![calibration](docs/plots/calibration.png)
@@ -107,7 +113,10 @@ transform in closed form. ICP is run afterwards only as a diagnostic, and how
 far it moves is reported in [docs/results.md](docs/results.md).
 
 <!-- table:reconstruction -->
-_Not generated yet: run `make experiments`._
+| stage | points on the part | median (mm) | mean (mm) | 90th pct (mm) | RMS (mm) | completeness |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| sparse | 1255 | **0.356** | 0.560 | 1.157 | 0.801 | 31.3% at 3 mm |
+| dense | 53018 | **1.361** | 1.942 | 4.241 | 2.518 | 24.9% at 1 mm |
 <!-- /table:reconstruction -->
 
 ![dense](docs/plots/dense.png)
@@ -118,7 +127,21 @@ Held-out stations, arbitrary orientations drawn from the full rotation group,
 against an appearance model built from the turntable scan.
 
 <!-- table:pose -->
-_Not generated yet: run `make experiments`._
+| metric | median | mean | 90th percentile |
+| --- | ---: | ---: | ---: |
+| translation (mm) | **3.800** | 4.130 | 6.066 |
+| rotation (deg) | **0.2924** | 0.3053 | 0.4704 |
+| ADD (mm) | **3.803** | 4.138 | 6.060 |
+| ADD-S (mm) | **3.124** | 3.089 | 4.305 |
+
+| recall | ADD | ADD-S |
+| --- | ---: | ---: |
+| within 2% of diameter (3.7 mm) | 45.0% | 67.5% |
+| within 5% of diameter (9.4 mm) | 97.5% | 97.5% |
+| within 10% of diameter (18.7 mm) | 97.5% | 97.5% |
+| within 1 mm | 2.5% | -- |
+
+40 stations, 39 solved, 1 refused.
 <!-- /table:pose -->
 
 ![pose](docs/plots/pose.png)
@@ -130,10 +153,37 @@ _Not generated yet: run `make experiments`._
 The brief this was built to asks for one thing above the rest: does the learned
 refiner earn its place, and if it does not, say so.
 
+> ### It does not. The network does not ship.
+>
+> On the held-out stations it makes the pose **2.1 per cent worse** than the
+> classical estimate it was given, and started from the same deliberately
+> perturbed pose it loses to a six-parameter Levenberg-Marquardt in every
+> magnitude band — badly, at the far end: from 12 mm out, the classical refiner
+> recovers to 3.9 mm and the network to 12.4 mm, which is to say it barely moves
+> the pose at all. More refinement iterations do not help.
+>
+> This is not a tuning failure that one more afternoon would fix, and the
+> evidence for that is in [analysis/](analysis/README.md#getting-the-pose-refiner-to-learn-anything-at-all).
+> The network is capable of the task — it drives the loss from 3.72 mm to
+> 0.65 mm when asked to overfit sixteen samples — and three separate
+> parameterisation and optimisation bugs were found and fixed on the way here.
+> What it could not do is *generalise*: after 4600 steps it is 1.2 per cent
+> better than predicting nothing, improving monotonically but hopelessly slowly.
+>
+> The honest diagnosis is that a hundred distinct training scenes is not enough
+> to learn to segment a machined part from a turntable of much the same texture
+> in a 96-pixel greyscale crop. The classical refiner does not have to learn
+> that, because it is handed correspondences.
+
 ### Does it ship?
 
 <!-- table:ablation -->
-_Not generated yet: run `make experiments`._
+| configuration | median ADD (mm) | median translation (mm) | median rotation (deg) | recall at 2% of diameter |
+| --- | ---: | ---: | ---: | ---: |
+| classical alone | 3.803 | 3.800 | 0.2924 | 45.0% |
+| classical + network | 3.882 | 3.855 | 0.3436 | 47.5% |
+
+The network **does not improve** ADD; it is 0.079 mm worse, at 145 ms per station on cuda.
 <!-- /table:ablation -->
 
 ### The same question, controlled
@@ -145,7 +195,14 @@ refiners are started from the **same** deliberately perturbed pose, across four
 magnitude bands.
 
 <!-- table:head_to_head -->
-_Not generated yet: run `make experiments`._
+| perturbation applied | start | classical LM | network | better |
+| --- | ---: | ---: | ---: | --- |
+| 0.5 mm / 0.3 deg | 0.533 | **0.539** | 0.971 | classical |
+| 2 mm / 1 deg | 2.084 | **2.190** | 2.285 | classical |
+| 5 mm / 3 deg | 5.331 | **4.021** | 5.400 | classical |
+| 12 mm / 6 deg | 12.495 | **3.872** | 12.368 | classical |
+
+Median ADD in mm, same perturbed starting pose for both refiners.
 <!-- /table:head_to_head -->
 
 ![ablation](docs/plots/ablation.png)

@@ -21,6 +21,24 @@ from ..geometry import se3
 from .render_compare import build_input
 
 
+def apply_correction(T_rig_object, twist, centroid):
+    """Compose a predicted twist, in the rig-aligned frame at the object centre.
+
+    The NumPy counterpart of
+    :func:`multicam.pose.network.apply_correction_torch`, and it must stay
+    identical to it: training composes one way and inference the other, and a
+    mismatch would be a refiner that works in training and not in use.  A test
+    checks the two against each other.
+    """
+    T = np.asarray(T_rig_object, dtype=float).reshape(4, 4)
+    centre = T[:3, :3] @ np.asarray(centroid, dtype=float).reshape(3) + T[:3, 3]
+    delta = se3.exp(np.asarray(twist, dtype=float).reshape(6))
+    shifted = np.eye(4)
+    shifted[:3, :3] = delta[:3, :3]
+    shifted[:3, 3] = delta[:3, 3] + centre - delta[:3, :3] @ centre
+    return shifted @ T
+
+
 @dataclass
 class RefinementTrace:
     """What each iteration did, for the ablation's convergence curves."""
@@ -67,7 +85,7 @@ def refine(network, renderer, images, rig, T_rig_object, iterations=2, device="c
             batch = torch.from_numpy(crops[None]).to(device)
             twist = network(batch, torch.from_numpy(valid).to(device))
             twist = twist.cpu().numpy().reshape(6)
-            T = T @ se3.exp(twist)
+            T = apply_correction(T, twist, renderer.centre)
             record.twists.append(twist)
             record.poses.append(T.copy())
 
