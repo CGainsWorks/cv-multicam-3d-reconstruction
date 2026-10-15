@@ -101,7 +101,8 @@ def plot_calibration(results, out, say):
           xlabel="baseline from reference (mm)", ylabel="rotation error (deg)")
 
     fig.suptitle("Calibration: residuals, and the error the residuals do not show",
-                 color=INK, fontsize=11, x=0.02, ha="left")
+                 color=INK, fontsize=11, x=0.02, ha="left", y=1.04)
+    fig.tight_layout()
     save(fig, out, "calibration.png", say)
 
 
@@ -150,8 +151,9 @@ def plot_reconstruction(results, out, say):
     fig.suptitle(
         "Sparse reconstruction: %d part points, median %.2f mm from the CAD surface"
         % (comp.get("part", 0), acc.get("median_mm", float("nan"))),
-        color=INK, fontsize=11, x=0.02, ha="left",
+        color=INK, fontsize=11, x=0.02, ha="left", y=1.04,
     )
+    fig.tight_layout()
     save(fig, out, "reconstruction.png", say)
 
 
@@ -189,8 +191,9 @@ def plot_dense(results, out, say):
     fig.suptitle(
         "Dense reconstruction: depth median %.2f mm, cloud median %.2f mm from CAD"
         % (depth.get("median_mm", np.nan), acc.get("median_mm", np.nan)),
-        color=INK, fontsize=11, x=0.02, ha="left",
+        color=INK, fontsize=11, x=0.02, ha="left", y=1.04,
     )
+    fig.tight_layout()
     save(fig, out, "dense.png", say)
 
 
@@ -232,8 +235,9 @@ def plot_pose(results, out, say):
         "Classical 6-DoF pose on %d held-out stations: median %.2f mm, %.3f deg"
         % (metrics.get("n", 0), metrics.get("translation_mm", {}).get("median", np.nan),
            metrics.get("rotation_deg", {}).get("median", np.nan)),
-        color=INK, fontsize=11, x=0.02, ha="left",
+        color=INK, fontsize=11, x=0.02, ha="left", y=1.04,
     )
+    fig.tight_layout()
     save(fig, out, "pose.png", say)
 
 
@@ -292,8 +296,9 @@ def plot_ablation(results, out, say):
     fig.suptitle(
         "Ablation on %d held-out stations: %s (ADD %+.3f mm)"
         % (data.get("stations", 0), verdict, dep.get("add_median_delta_mm", np.nan)),
-        color=INK, fontsize=11, x=0.02, ha="left",
+        color=INK, fontsize=11, x=0.02, ha="left", y=1.04,
     )
+    fig.tight_layout()
     save(fig, out, "ablation.png", say)
 
 
@@ -311,27 +316,28 @@ def plot_summary(results, out, say):
 
     stages, values, colours = [], [], []
     if calibration:
-        stages.append("rig extrinsics\n(max error)")
+        stages.append("rig\nextrinsics")
         values.append(calibration["headline"]["extrinsic_max_translation_error_mm"])
         colours.append(MUTED)
     if sparse:
-        stages.append("sparse points\n(median to CAD)")
+        stages.append("sparse\npoints")
         values.append(sparse["headline"]["cad_median_error_mm"])
         colours.append(ACCENT)
     if dense:
-        stages.append("dense cloud\n(median to CAD)")
+        stages.append("dense\ncloud")
         values.append(dense["headline"]["cad_median_error_mm"])
         colours.append(ACCENT)
     if pose:
-        stages.append("pose\n(median translation)")
+        stages.append("6-DoF\npose")
         values.append(pose["headline"]["translation_median_mm"])
         colours.append(WARM)
     axes[0].bar(stages, values, color=colours)
     for i, v in enumerate(values):
         axes[0].annotate("%.2f" % v, (i, v), ha="center", va="bottom", fontsize=8,
                          color=INK)
-    axes[0].tick_params(axis="x", labelsize=7)
-    style(axes[0], "Error through the pipeline", ylabel="mm")
+    axes[0].tick_params(axis="x", labelsize=8)
+    style(axes[0], "Error through the pipeline",
+          ylabel="mm (max for the rig, median otherwise)")
 
     if sparse and dense:
         names = ["sparse", "dense"]
@@ -362,7 +368,8 @@ def plot_summary(results, out, say):
         axes[2].axis("off")
 
     fig.suptitle("Multi-camera reconstruction and 6-DoF pose", color=INK, fontsize=12,
-                 x=0.02, ha="left")
+                 x=0.02, ha="left", y=1.04)
+    fig.tight_layout()
     save(fig, out, "summary.png", say)
 
 

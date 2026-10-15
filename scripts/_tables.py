@@ -225,14 +225,70 @@ def table_colmap(results):
                        _fmt(100 * c["completeness"], "%.1f")))
     rows.append("")
     rows.append(
-        "COLMAP registered %d of %d images. Its reconstruction is metric only "
-        "after a scale factor of **%s**, which is what the rig calibration "
-        "supplies for free; camera centres then agree with ours to a median of "
-        "**%s mm**."
+        "COLMAP registered %d of %d images into %s model(s), with a mean "
+        "reprojection error of %s px."
         % (d["colmap"]["images_registered"], d["colmap"]["images_total"],
-           _fmt(d["alignment"]["scale"], "%.4f"),
-           _fmt(d["camera_centre_agreement_mm"]["median"], "%.2f"))
+           d["colmap"].get("models", "?"),
+           _fmt(d["colmap"].get("mean_reprojection_error_px"), "%.3f"))
     )
+
+    scene = d.get("scene_reconstructed", {})
+    spread = scene.get("camera_centre_spread_across_stations_mm", {})
+    recovered_part = d["cad_accuracy"]["colmap"]["points"] > 0
+
+    if not recovered_part:
+        rows.append("")
+        rows.append(
+            "**COLMAP did not recover the part from this sequence.** It registered "
+            "a minority of the images, split them across several models, placed "
+            "none of its points within 6 mm of the part's CAD surface, and its "
+            "camera centres disagree with ours by a median of **%s mm** after the "
+            "best similarity alignment. The spread of each camera's recovered "
+            "centre across the stations is **%s mm**, against **%s mm** in the "
+            "object frame the part is actually rigid in."
+            % (_fmt(d["camera_centre_agreement_mm"]["median"], "%.0f"),
+               _fmt(spread.get("colmap"), "%.0f"),
+               _fmt(spread.get("ours_object_frame"), "%.0f"))
+        )
+        rows.append("")
+        rows.append(
+            "This is a structural result, not a defect in COLMAP and not a tuning "
+            "failure. Structure from motion assumes **one** rigid scene; a "
+            "turntable sequence contains two irreconcilable ones -- a room that "
+            "does not move and a part that does -- and nothing in the algorithm "
+            "can prefer one over the other. The instability is the signature: two "
+            "runs with identical settings registered 50 and 15 of the 72 images, "
+            "which is what no stable solution looks like."
+        )
+    if not recovered_part:
+        seed = d["colmap"].get("seed")
+        rows.append("")
+        rows.append(
+            "Run with `pycolmap.set_random_seed(%d)`, so this particular number is "
+            "reproducible; the spread above is what it looks like without one."
+            % seed
+            if seed is not None else
+            "_This record predates the fixed seed, so the exact registration count "
+            "is one draw from the spread described above rather than a reproducible "
+            "figure. `scripts/colmap_baseline.py` now seeds the mapper._"
+        )
+        rows.append("")
+        rows.append(
+            "It is also the clearest evidence available that the multi-motion fit "
+            "in `multicam.reconstruction.align` is necessary rather than "
+            "ornamental: given the same images, the thing it exists to do is the "
+            "thing a mature, heavily-tested reference implementation cannot do at "
+            "all."
+        )
+    else:
+        rows.append("")
+        rows.append(
+            "Its reconstruction is metric only after a scale factor of **%s**, "
+            "which is what the rig calibration supplies for free; camera centres "
+            "then agree with ours to a median of **%s mm**."
+            % (_fmt(d["alignment"]["scale"], "%.4f"),
+               _fmt(d["camera_centre_agreement_mm"]["median"], "%.2f"))
+        )
     return "\n".join(rows)
 
 

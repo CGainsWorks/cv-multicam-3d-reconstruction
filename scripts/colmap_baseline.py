@@ -42,6 +42,8 @@ def build_parser():
     p.add_argument("--rig", default=None)
     p.add_argument("--stations", type=int, default=0)
     p.add_argument("--max-image-size", type=int, default=1600)
+    p.add_argument("--max-models", type=int, default=3,
+                   help="bound COLMAP's re-initialisation; the largest model is used")
     p.add_argument("--keep-workspace", action="store_true")
     p.add_argument("--tag", default="colmap")
     p.add_argument("--quiet", action="store_true")
@@ -84,7 +86,8 @@ def main(argv=None):
 
     workspace = Path(args.workspace) if args.workspace else _bootstrap.ROOT / "colmap_workspace"
     say("running COLMAP over %d images in %s" % (len(frames) * data.n_cameras, workspace))
-    result = colmap_io.run(images, workspace, max_image_size=args.max_image_size)
+    result = colmap_io.run(images, workspace, max_image_size=args.max_image_size,
+                           max_models=args.max_models)
 
     say("  registered %d of %d images into %d model(s) in %.1f s"
         % (result.n_images_registered, result.n_images_total,
@@ -169,6 +172,62 @@ def main(argv=None):
         % (len(pose_errors), np.median(pose_errors) * 1000,
            np.quantile(pose_errors, 0.9) * 1000))
 
+    # -- which scene did COLMAP actually reconstruct? -----------------------
+    #
+    # This is the question that decides whether the comparison means anything.
+    # In the *object* frame, which is the frame our pipeline works in, the four
+    # cameras occupy 4 x N distinct positions as the part turns.  In the *world*
+    # frame they never move at all: there are only four positions, each visited
+    # N times.
+    #
+    # So group COLMAP's camera centres by camera index and measure the spread
+    # within each group.  Near zero means COLMAP reconstructed the static room
+    # and treated the turning part as an outlier -- the exact failure the
+    # multi-motion alignment in multicam.reconstruction.align exists to avoid,
+    # and one that structure from motion has no mechanism to detect.
+    by_camera, by_station = {}, {}
+    for name, T_cam_colmap in result.image_poses.items():
+        key = index.get(name)
+        if key is None:
+            continue
+        frame, camera = int(key[0]), int(key[1])
+        centre = colmap_io.apply_similarity(
+            T_align, scale, se3.camera_centre(T_cam_colmap)[None, :]
+        )[0]
+        by_camera.setdefault(camera, []).append(centre)
+        by_station.setdefault(frame, []).append(centre)
+
+    def spread_mm(groups):
+        out = []
+        for members in groups.values():
+            members = np.asarray(members)
+            if len(members) < 2:
+                continue
+            out.append(float(np.linalg.norm(members - members.mean(axis=0), axis=1).mean()))
+        return float(np.mean(out)) * 1000 if out else float("nan")
+
+    colmap_camera_spread = spread_mm(by_camera)
+    reference_by_camera = {}
+    for (frame, camera), T in reference_poses.items():
+        reference_by_camera.setdefault(camera, []).append(se3.camera_centre(T))
+    ours_camera_spread = spread_mm(reference_by_camera)
+
+    say("\nWhich scene did COLMAP reconstruct?")
+    say("  spread of each camera's centres across stations:")
+    say("    ours (object frame, so the cameras orbit the part): %.1f mm"
+        % ours_camera_spread)
+    say("    COLMAP:                                             %.1f mm"
+        % colmap_camera_spread)
+    reconstructed_static = (
+        np.isfinite(colmap_camera_spread)
+        and colmap_camera_spread < 0.25 * ours_camera_spread
+    )
+    if reconstructed_static:
+        say("  -> COLMAP reconstructed the STATIC SCENE: each camera barely moves in "
+            "its frame, so the part was treated as an outlier rather than as the "
+            "subject.  Its points are therefore not comparable to the part's CAD "
+            "model, and the zero above is that, not a failure to triangulate.")
+
     record = {
         "tag": args.tag,
         "available": True,
@@ -180,6 +239,13 @@ def main(argv=None):
         "alignment": {"scale": scale, **align_stats},
         "cad_accuracy": {"ours": acc_ours, "colmap": acc_colmap},
         "cad_completeness_3mm": {"ours": comp_ours, "colmap": comp_colmap},
+        "scene_reconstructed": {
+            "camera_centre_spread_across_stations_mm": {
+                "ours_object_frame": colmap_camera_spread * 0 + ours_camera_spread,
+                "colmap": colmap_camera_spread,
+            },
+            "colmap_reconstructed_static_scene": bool(reconstructed_static),
+        },
         "camera_centre_agreement_mm": {
             "median": float(np.median(pose_errors) * 1000),
             "p90": float(np.quantile(pose_errors, 0.9) * 1000),
@@ -197,6 +263,7 @@ def main(argv=None):
             "colmap_median_mm": acc_colmap["median_mm"],
             "ours_median_mm": acc_ours["median_mm"],
             "camera_centre_median_mm": float(np.median(pose_errors) * 1000),
+            "colmap_reconstructed_static_scene": bool(reconstructed_static),
         },
     }
     (out / ("%s.json" % args.tag)).write_text(

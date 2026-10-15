@@ -107,7 +107,7 @@ def export_images(images_by_frame, workspace, prefix="img"):
 
 
 def run(images_by_frame, workspace, camera_model="OPENCV", shared_camera=False,
-        max_image_size=1600, quiet=True):
+        max_image_size=1600, quiet=True, max_models=3, min_model_size=12, seed=0):
     """Run the COLMAP incremental pipeline over a capture.
 
     ``shared_camera=False`` because the four cameras genuinely have different
@@ -136,6 +136,17 @@ def run(images_by_frame, workspace, camera_model="OPENCV", shared_camera=False,
         except Exception:
             pass
 
+    # COLMAP's incremental mapper is randomised, and on this sequence it is
+    # *very* randomised: two runs with identical settings registered 50 and 15
+    # of the 72 images.  That spread is itself the finding -- a turntable gives
+    # structure from motion two irreconcilable rigid scenes and no stable
+    # solution to settle on -- but an unseeded number has no business being
+    # quoted in a README, so the seed is fixed and recorded.
+    try:
+        pycolmap.set_random_seed(int(seed))
+    except Exception:
+        pass
+
     t0 = time.time()
     reader = pycolmap.ImageReaderOptions()
     reader.camera_model = camera_model
@@ -148,8 +159,25 @@ def run(images_by_frame, workspace, camera_model="OPENCV", shared_camera=False,
         reader_options=reader, extraction_options=extraction,
     )
     pycolmap.match_exhaustive(database_path=database)
+
+    mapper = pycolmap.IncrementalPipelineOptions()
+    # A turntable sequence is an awkward thing to hand a structure-from-motion
+    # pipeline: the object moves, the room does not, and the two are
+    # irreconcilable in any single rigid reconstruction.  COLMAP's response is
+    # to split the images into separate models, and left to its default of 50 it
+    # will keep re-initialising for well over an hour, producing a sixth and a
+    # seventh fragment that register a handful of images each.
+    #
+    # Capping the model count bounds the run without changing what is measured:
+    # the comparison uses the largest model, and the number of models it needed
+    # is reported, because "COLMAP could not fit this in one model" is itself a
+    # result worth having.
+    mapper.max_num_models = int(max_models)
+    mapper.min_model_size = int(min_model_size)
+
     maps = pycolmap.incremental_mapping(
         database_path=database, image_path=image_dir, output_path=sparse_dir,
+        options=mapper,
     )
     seconds = time.time() - t0
 
@@ -192,7 +220,9 @@ def run(images_by_frame, workspace, camera_model="OPENCV", shared_camera=False,
         mean_track_length=float(np.mean(tracks)) if tracks else 0.0,
         mean_reprojection_error_px=float(np.mean(errors)) if errors else float("nan"),
         seconds=seconds,
-        stats={"models": len(maps), "image_index": {k: list(v) for k, v in index.items()}},
+        stats={"models": len(maps), "seed": int(seed),
+               "max_models": int(max_models),
+               "image_index": {k: list(v) for k, v in index.items()}},
     )
 
 

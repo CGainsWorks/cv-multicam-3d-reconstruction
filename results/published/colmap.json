@@ -1,0 +1,93 @@
+{
+  "alignment": {
+    "cameras_aligned": 15,
+    "centre_max_mm": 690.4658445707034,
+    "centre_rmse_mm": 563.7516728044062,
+    "scale": 0.005263948028727454
+  },
+  "available": true,
+  "cad_accuracy": {
+    "colmap": {
+      "inlier_fraction": 0.0,
+      "mean_mm": NaN,
+      "median_mm": NaN,
+      "p90_mm": NaN,
+      "points": 0,
+      "rms_mm": NaN
+    },
+    "ours": {
+      "inlier_fraction": 1.0,
+      "inlier_threshold_mm": 5.0,
+      "max_mm": 4.754990339279175,
+      "mean_mm": 0.5599125190985933,
+      "median_mm": 0.3564273938536644,
+      "p90_mm": 1.1569023132324228,
+      "p99_mm": 2.8760203532874593,
+      "points": 1255,
+      "rms_mm": 0.8008597223316118
+    }
+  },
+  "cad_completeness_3mm": {
+    "colmap": {
+      "completeness": 0.0,
+      "median_mm": NaN,
+      "samples": 0,
+      "threshold_mm": 3.0
+    },
+    "ours": {
+      "completeness": 0.3133,
+      "median_mm": 4.94519756183843,
+      "p90_mm": 17.776487891770348,
+      "samples": 20000,
+      "threshold_mm": 3.0
+    }
+  },
+  "camera_centre_agreement_mm": {
+    "images": 15,
+    "max": 690.4658445707034,
+    "median": 552.2655677077491,
+    "p90": 680.4722343038428
+  },
+  "caveats": [
+    "COLMAP solves for every camera pose; ours is given the calibrated rig.",
+    "COLMAP's reconstruction is metric only after the reported scale factor is applied; ours is metric from the rig calibration.",
+    "Both were run on identical images."
+  ],
+  "colmap": {
+    "images_registered": 15,
+    "images_total": 72,
+    "mean_reprojection_error_px": 0.5224043502689426,
+    "mean_track_length": 2.414038657171923,
+    "models": 3,
+    "points": 983,
+    "seconds": 1289.0176844596863
+  },
+  "commit": "c4e359b",
+  "dataset": "data/turntable",
+  "headline": {
+    "camera_centre_median_mm": 552.2655677077491,
+    "colmap_median_mm": NaN,
+    "colmap_reconstructed_static_scene": false,
+    "colmap_scale": 0.005263948028727454,
+    "ours_median_mm": 0.3564273938536644
+  },
+  "pycolmap": "4.1.1",
+  "scene_reconstructed": {
+    "camera_centre_spread_across_stations_mm": {
+      "colmap": 197.34464681728724,
+      "ours_object_frame": 601.112288884849
+    },
+    "colmap_reconstructed_static_scene": false
+  },
+  "tag": "colmap",
+  "versions": {
+    "cv2": "5.0.0",
+    "numpy": "2.5.2",
+    "open3d": "0.19.0",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "pycolmap": "4.1.1",
+    "python": "3.12.0",
+    "scipy": "1.18.1",
+    "torch": "2.5.1+cu121"
+  }
+}

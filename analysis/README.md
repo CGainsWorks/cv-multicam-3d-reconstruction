@@ -151,6 +151,39 @@ makes the problem reasonable in the first place.
 
 ---
 
+## What the COLMAP baseline turned out to measure
+
+It was set up as a referee: run the reference implementation on the same images,
+and treat agreement as evidence that the geometry is right. It did not referee
+anything, and what it did instead is more useful.
+
+COLMAP **cannot reconstruct the part from this sequence at all**. It registers a
+minority of the 72 images, splits them across several models, and places none of
+its points within 6 mm of the part's CAD surface. Its camera centres disagree
+with ours by hundreds of millimetres after the best similarity alignment.
+
+The tell is the instability. Two runs with identical settings registered 50 and
+15 of the 72 images. An algorithm converging on a solution does not do that; an
+algorithm with no solution to converge on does.
+
+The reason is structural. Structure from motion assumes **one** rigid scene. A
+turntable sequence contains two irreconcilable ones — a room that does not move
+and a part that does — and there is nothing in the algorithm that can prefer the
+part. It is precisely the failure that
+[`align.py`](../src/multicam/reconstruction/align.py) exists to avoid, by fitting
+several rigid motions and keeping the one that is not the identity.
+
+So the honest summary is not "ours is more accurate than COLMAP". It is: given
+identical images, the specific thing our pipeline is built to do is a thing a
+mature, heavily tested reference implementation cannot do, because it was never
+built to do it. That is a much weaker claim about implementation quality and a
+much stronger one about the design decision.
+
+The seed is now fixed, because a number that swings between 50 and 15 has no
+business being quoted in a README.
+
+---
+
 ## The three bugs that produced plausible-looking wrong answers
 
 Collected because they share a shape: each one left every visible diagnostic

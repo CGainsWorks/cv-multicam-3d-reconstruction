@@ -216,18 +216,33 @@ correspondences — are in [docs/results.md](docs/results.md).
 ## COLMAP, as an independent reference
 
 COLMAP is the reference implementation for this problem and shares no code with
-anything in `src/multicam/reconstruction`. Agreement is evidence that the
-geometry is right; disagreement means one of the two has a bug.
+anything in `src/multicam/reconstruction`. It was run on identical images,
+through `pycolmap`.
 
 The comparison is **not symmetric**, and the report says so. COLMAP solves for
 every camera pose from scratch, which is a strictly harder problem than ours —
 we are handed the calibrated rig — and it recovers geometry only up to a
 similarity, so its result has to be scaled before it can be compared to a metric
-one. That scale factor is reported, because it is the single number that says
-what the rig calibration was worth.
+one.
+
+It is also the experiment that most sharply justifies one of the design
+decisions here, and not in the direction expected when it was set up.
 
 <!-- table:colmap -->
-_Not generated yet: run `make experiments`._
+| | points on the part | median to CAD (mm) | RMS (mm) | completeness at 3 mm |
+| --- | ---: | ---: | ---: | ---: |
+| ours | 1255 | 0.356 | 0.801 | 31.3% |
+| COLMAP | 0 | -- | -- | 0.0% |
+
+COLMAP registered 15 of 72 images into 3 model(s), with a mean reprojection error of 0.522 px.
+
+**COLMAP did not recover the part from this sequence.** It registered a minority of the images, split them across several models, placed none of its points within 6 mm of the part's CAD surface, and its camera centres disagree with ours by a median of **552 mm** after the best similarity alignment. The spread of each camera's recovered centre across the stations is **197 mm**, against **601 mm** in the object frame the part is actually rigid in.
+
+This is a structural result, not a defect in COLMAP and not a tuning failure. Structure from motion assumes **one** rigid scene; a turntable sequence contains two irreconcilable ones -- a room that does not move and a part that does -- and nothing in the algorithm can prefer one over the other. The instability is the signature: two runs with identical settings registered 50 and 15 of the 72 images, which is what no stable solution looks like.
+
+_This record predates the fixed seed, so the exact registration count is one draw from the spread described above rather than a reproducible figure. `scripts/colmap_baseline.py` now seeds the mapper._
+
+It is also the clearest evidence available that the multi-motion fit in `multicam.reconstruction.align` is necessary rather than ornamental: given the same images, the thing it exists to do is the thing a mature, heavily-tested reference implementation cannot do at all.
 <!-- /table:colmap -->
 
 ---
