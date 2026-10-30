@@ -1,0 +1,10 @@
+# The GenICam capture path, on top of requirements.txt.  Linux only.
+#
+# PyGObject is how Python loads Aravis (GObject introspection).  It builds
+# from source against the system's libgirepository, so it needs the packages
+# `scripts/genicam/setup_aravis.sh apt` installs.  3.48 is the last release
+# on libgirepository-1.0, which is what Ubuntu 24.04 ships Aravis's
+# introspection tooling with.  Aravis itself is not a pip package: the same
+# script builds the pinned release from source.
+PyGObject==3.48.2
+pycairo==1.26.1
