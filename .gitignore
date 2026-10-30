@@ -20,7 +20,7 @@ data/*
 !data/.gitkeep
 !data/DATASET_CARD.md
 
-# Trained weights are neither committed nor published; see the README.
+# Trained weights are not committed; the refiner is a release asset (refiner-v1).
 models/*.pt
 models/*.pth
 !models/.gitkeep

@@ -233,15 +233,19 @@ The remaining two experiments — how the result moves with the number of
 refinement iterations, and what happens as the classical stage is starved of
 correspondences — are in [docs/results.md](docs/results.md).
 
-### Rerunning the ablation needs retraining
+### Rerunning the ablation
 
-**The trained network is not published**: `models/refiner.pt` is not in the
-repository, in a release or anywhere else. The ablation above therefore cannot
-be rerun from a clone as it stands; the network has to be retrained first. A
-retrained network will not reproduce these numbers to the last digit. CI does
-not train it and does not run the ablation.
+**The trained network is published** as release
+[`refiner-v1`](https://github.com/CGainsWorks/cv-multicam-3d-reconstruction/releases/tag/refiner-v1)
+(`refiner.pt`, SHA-256 `c9b849fd8306e3de51435e4331e24449799ad45c3dc869743896c9ae0a8e350b`,
+MIT). Its embedded training history, configuration and parameter count are
+identical to `results/published/refiner_training.json`. Check it against the
+release's `SHA256SUMS`, save it as `models/refiner.pt`, then run
+`make data`, `make calibrate reconstruct pose` and
+`python scripts/ablate.py --data data/turntable --out results`. CI does not run
+the ablation.
 
-On a clean clone, with the configuration recorded in
+To retrain it instead, on a clean clone with the configuration recorded in
 `results/published/refiner_training.json`:
 
 ```bash

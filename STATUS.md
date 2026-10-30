@@ -56,16 +56,16 @@ Nothing.
 - **Turntable motion control.** `multicam.capture.Turntable.move_to` is an
   interface only; the simulated stage just tells the simulated cameras which
   frame to serve.
-- **Publishing the refiner checkpoint.** `models/refiner.pt` is not committed,
-  not in a release and not uploaded anywhere. See the limitation below.
 - **A fairer COLMAP comparison**: masking the static background, or giving
   COLMAP the calibrated rig. Neither was tried.
 
 ## Limitations
 
-- **The ablation cannot be rerun without retraining.** The checkpoint is not
-  published, so reproducing the ablation means training the network again,
-  which CI does not do. From a clean clone:
+- **The ablation is not run in CI.** The trained network is published as
+  release `refiner-v1` (SHA-256 `c9b849fd…a8e350b`, with the same history and
+  configuration as `results/published/refiner_training.json`), so the ablation
+  can be rerun locally without retraining. To retrain it instead, from a clean
+  clone:
 
   ```bash
   make data                       # render the capture, about 20 minutes

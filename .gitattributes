@@ -10,8 +10,8 @@
 *.npz binary
 
 # Git LFS.  Nothing in the history needs it today: the renderer regenerates
-# every image and every mesh from a seed; the trained weights are not
-# published at all (see the README).  The rules are declared so that a large
+# every image and every mesh from a seed; the trained refiner is a release
+# asset, not a tracked file (see the README).  The rules are declared so that a large
 # binary added later lands in LFS instead of the pack file.
 *.pt   filter=lfs diff=lfs merge=lfs -text
 *.pth  filter=lfs diff=lfs merge=lfs -text
