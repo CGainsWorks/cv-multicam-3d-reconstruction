@@ -136,12 +136,12 @@ def run(images_by_frame, workspace, camera_model="OPENCV", shared_camera=False,
         except Exception:
             pass
 
-    # COLMAP's incremental mapper is randomised, and on this sequence it is
-    # *very* randomised: two runs with identical settings registered 50 and 15
-    # of the 72 images.  That spread is itself the finding -- a turntable gives
-    # structure from motion two irreconcilable rigid scenes and no stable
-    # solution to settle on -- but an unseeded number has no business being
-    # quoted in a README, so the seed is fixed and recorded.
+    # COLMAP's incremental mapper is randomised; on this sequence it appeared
+    # very randomised: two unseeded runs with identical settings registered 50
+    # and 15 of the 72 images (only the second run's record was kept).  The
+    # likely reason is that a turntable gives structure from motion two rigid
+    # scenes and no stable solution to settle on.  An unseeded number has no
+    # business being quoted in a README, so the seed is fixed and recorded.
     try:
         pycolmap.set_random_seed(int(seed))
     except Exception:

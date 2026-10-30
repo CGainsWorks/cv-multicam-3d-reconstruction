@@ -187,7 +187,7 @@ the brief asks and the one that decides whether the network ships.
 | classical alone | 3.803 | 3.800 | 0.2924 | 45.0% |
 | classical + network | 3.882 | 3.855 | 0.3436 | 47.5% |
 
-The network **does not improve** ADD; it is 0.079 mm worse, at 145 ms per station on cuda.
+The network **does not improve** ADD; it is 0.079 mm worse, at 145 ms per station on cuda (a local workstation GPU; CI has no GPU and does not run the ablation).
 <!-- /table:ablation -->
 
 ### B. The same question, controlled
@@ -256,11 +256,13 @@ COLMAP registered 15 of 72 images into 3 model(s), with a mean reprojection erro
 
 **COLMAP did not recover the part from this sequence.** It registered a minority of the images, split them across several models, placed none of its points within 6 mm of the part's CAD surface, and its camera centres disagree with ours by a median of **552 mm** after the best similarity alignment. The spread of each camera's recovered centre across the stations is **197 mm**, against **601 mm** in the object frame the part is actually rigid in.
 
-This is a structural result, not a defect in COLMAP and not a tuning failure. Structure from motion assumes **one** rigid scene; a turntable sequence contains two irreconcilable ones -- a room that does not move and a part that does -- and nothing in the algorithm can prefer one over the other. The instability is the signature: two runs with identical settings registered 50 and 15 of the 72 images, which is what no stable solution looks like.
+The likely reason is structural rather than a defect in COLMAP. Structure from motion assumes **one** rigid scene; a turntable sequence contains two, a room that does not move and a part that does; nothing in the algorithm prefers the part. That is an explanation, not a measurement: this record is a single COLMAP run with its default incremental-mapping settings on unmasked images. Neither masking out the static background nor handing it the calibrated rig was tried. Either would make the comparison fairer and might change the result.
 
-_This record predates the fixed seed, so the exact registration count is one draw from the spread described above rather than a reproducible figure. `scripts/colmap_baseline.py` now seeds the mapper._
+_This record predates the fixed seed, so the registration count is one draw of a randomised mapper, not a reproducible figure. An earlier unseeded run registered a different number of images; its record was not kept, so how much the count varies is not measured here. `scripts/colmap_baseline.py` now seeds the mapper._
 
-It is also the clearest evidence available that the multi-motion fit in `multicam.reconstruction.align` is necessary rather than ornamental: given the same images, the thing it exists to do is the thing a mature, heavily-tested reference implementation cannot do at all.
+What it does support is the design decision in `multicam.reconstruction.align`: on these images, a method that assumes a single rigid scene did not recover the part while the multi-motion fit, which keeps the motion that is not the room, did. It is not evidence that our reconstruction is better than COLMAP's in general.
+
+COLMAP took 1289 s on the workstation that produced this record. It is not run in CI.
 <!-- /table:colmap -->
 
 The caveats, which are also in `results/colmap.json` so they travel with the

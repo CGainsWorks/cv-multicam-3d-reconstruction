@@ -20,7 +20,7 @@ data/*
 !data/.gitkeep
 !data/DATASET_CARD.md
 
-# Trained weights live in Releases, not in the history.
+# Trained weights are neither committed nor published; see the README.
 models/*.pt
 models/*.pth
 !models/.gitkeep

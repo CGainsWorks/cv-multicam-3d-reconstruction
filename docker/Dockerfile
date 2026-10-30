@@ -6,8 +6,9 @@
 #
 # CPU only.  Torch comes from the CPU wheel index deliberately -- the default
 # PyPI wheel carries the CUDA runtime, which is well over a gigabyte in the
-# image and useless without `--gpus`.  Nothing here needs a GPU: the only
-# trained model is small enough to train on CPU, which is what CI does.
+# image and useless without `--gpus`.  Nothing the demo runs needs a GPU.  The
+# pose-refinement network is not trained by the demo or by CI; see "Rerunning
+# the ablation needs retraining" in the README.
 
 FROM python:3.12-slim-bookworm
 

@@ -281,7 +281,9 @@ The ablation that decides whether it ships is in
 
 ## Testing
 
-135 tests, and the ones that earn their place are:
+152 tests, of which 6 run against Aravis's simulated GigE Vision cameras and
+skip where Aravis is not installed (CI installs it and requires them). The ones
+that earn their place are:
 
 - **Every Jacobian against central finite differences.** A solver with a subtly
   wrong Jacobian converges on easy problems and fails on hard ones, which is

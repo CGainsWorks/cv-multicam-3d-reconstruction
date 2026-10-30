@@ -21,6 +21,13 @@ is a real limitation and it is the first entry in
 truth exact, which is the only reason a calibration can be scored against the
 rig it was trying to recover rather than merely against its own residual.
 
+The capture side is simulated too, though through real camera software: the
+GenICam / GigE Vision capture path (Aravis 0.8.36) runs in CI against three of
+Aravis's simulated GigE Vision cameras; frames captured that way go through
+the same calibration, reconstruction and pose pipeline. No real camera has ever
+been connected. What is done, what is simulated and what is left is in
+[STATUS.md](STATUS.md).
+
 <!-- table:headline -->
 The rig calibrates to **0.151 px** of reprojection residual and to within **2.53 mm** of its true geometry on a 747 mm baseline. The part reconstructs to a median of **0.36 mm** from its CAD surface. 6-DoF pose on held-out stations is **3.80 mm** and **0.292 deg** at the median.
 <!-- /table:headline -->
@@ -47,8 +54,9 @@ The rig calibrates to **0.151 px** of reprojection residual and to within **2.53
 | **Learned refiner** | A 0.6 M-parameter render-and-compare CNN over per-camera crops, predicting a twist applied with the same retraction the classical refiner uses. It is given the CAD model's *geometry* and never its appearance |
 | **Reference** | COLMAP, through `pycolmap`, on identical images. It shares no code with any of the above |
 | **Evaluation** | Reprojection residuals, point-to-surface distance to CAD, completeness, chamfer, ADD and ADD-S with recall at several thresholds, and per-class labelling so the fixture is not scored as the part |
+| **Capture** | GenICam / GigE Vision through Aravis: feature access, `AcquisitionStart`, frame-start triggering (hardware line by default, software for the simulator), device timestamps, PTP where offered plus a timestamp check that drops and re-triggers any frame set whose exposures are spread too far. **Run only against Aravis's simulated cameras** |
 | **Simulator** | A z-buffered rasteriser with near-plane clipping, perspective-correct interpolation and physically correct lens distortion, plus the rig, the scene and the capture planner |
-| **Tests** | 135, including every Jacobian against finite differences, the renderer against the projection equations, the bundle adjuster against a known answer, and a firewall test that fails if any pipeline module so much as names a ground-truth accessor |
+| **Tests** | 152, of which 6 run against Aravis's simulated GigE Vision cameras (Linux only; CI runs them and they skip elsewhere). They include every Jacobian against finite differences, the renderer against the projection equations, the bundle adjuster against a known answer and a firewall test that fails if any pipeline module so much as names a ground-truth accessor |
 
 ---
 
@@ -66,6 +74,20 @@ Python packages.
 
 `docker compose -f docker/docker-compose.yml run --rm multicam` does the same in
 a container.
+
+The GenICam capture path, against three simulated GigE Vision cameras, on
+Linux or in a container (the simulated cameras live on the container's own
+loopback interface, so it needs no network):
+
+```bash
+docker build -f docker/genicam.Dockerfile -t multicam-genicam .
+docker run --rm --network none --cap-add NET_ADMIN multicam-genicam
+```
+
+That runs the GenICam tests and `scripts/genicam_demo.py`, which renders a
+three-camera capture, serves it from the simulated cameras, captures it back
+with a software trigger per frame set, checks every frame arrived bit for bit
+and runs the pipeline over what arrived. CI does the same on its runner.
 
 ```bash
 make check                 # lint plus the full test suite, exactly what CI runs
@@ -183,7 +205,7 @@ refiner earn its place, and if it does not, say so.
 | classical alone | 3.803 | 3.800 | 0.2924 | 45.0% |
 | classical + network | 3.882 | 3.855 | 0.3436 | 47.5% |
 
-The network **does not improve** ADD; it is 0.079 mm worse, at 145 ms per station on cuda.
+The network **does not improve** ADD; it is 0.079 mm worse, at 145 ms per station on cuda (a local workstation GPU; CI has no GPU and does not run the ablation).
 <!-- /table:ablation -->
 
 ### The same question, controlled
@@ -210,6 +232,29 @@ Median ADD in mm, same perturbed starting pose for both refiners.
 The remaining two experiments — how the result moves with the number of
 refinement iterations, and what happens as the classical stage is starved of
 correspondences — are in [docs/results.md](docs/results.md).
+
+### Rerunning the ablation needs retraining
+
+**The trained network is not published**: `models/refiner.pt` is not in the
+repository, in a release or anywhere else. The ablation above therefore cannot
+be rerun from a clone as it stands; the network has to be retrained first. A retrained
+network will not reproduce these numbers to the last digit. CI does
+not train it and does not run the ablation.
+
+On a clean clone, with the configuration recorded in
+`results/published/refiner_training.json`:
+
+```bash
+make data                       # render the capture, about 20 minutes
+make calibrate reconstruct pose # the rig, the sparse model and the classical pose
+python scripts/train_refiner.py --data data/turntable --out results --models models     --epochs 40 --batch-size 12 --samples-per-frame 14 --seed 0
+python scripts/ablate.py --data data/turntable --out results
+```
+
+`make train ablate` runs the last two with the same settings. The recorded
+training run took **1820 s (about 30 minutes) on a CUDA GPU**; it has not been
+timed on a CPU. The other recorded stage times are 127 s for `reconstruct` and
+40 s for `pose`; the ablation's own wall clock was not recorded.
 
 ---
 
@@ -238,11 +283,13 @@ COLMAP registered 15 of 72 images into 3 model(s), with a mean reprojection erro
 
 **COLMAP did not recover the part from this sequence.** It registered a minority of the images, split them across several models, placed none of its points within 6 mm of the part's CAD surface, and its camera centres disagree with ours by a median of **552 mm** after the best similarity alignment. The spread of each camera's recovered centre across the stations is **197 mm**, against **601 mm** in the object frame the part is actually rigid in.
 
-This is a structural result, not a defect in COLMAP and not a tuning failure. Structure from motion assumes **one** rigid scene; a turntable sequence contains two irreconcilable ones -- a room that does not move and a part that does -- and nothing in the algorithm can prefer one over the other. The instability is the signature: two runs with identical settings registered 50 and 15 of the 72 images, which is what no stable solution looks like.
+The likely reason is structural rather than a defect in COLMAP. Structure from motion assumes **one** rigid scene; a turntable sequence contains two, a room that does not move and a part that does; nothing in the algorithm prefers the part. That is an explanation, not a measurement: this record is a single COLMAP run with its default incremental-mapping settings on unmasked images. Neither masking out the static background nor handing it the calibrated rig was tried. Either would make the comparison fairer and might change the result.
 
-_This record predates the fixed seed, so the exact registration count is one draw from the spread described above rather than a reproducible figure. `scripts/colmap_baseline.py` now seeds the mapper._
+_This record predates the fixed seed, so the registration count is one draw of a randomised mapper, not a reproducible figure. An earlier unseeded run registered a different number of images; its record was not kept, so how much the count varies is not measured here. `scripts/colmap_baseline.py` now seeds the mapper._
 
-It is also the clearest evidence available that the multi-motion fit in `multicam.reconstruction.align` is necessary rather than ornamental: given the same images, the thing it exists to do is the thing a mature, heavily-tested reference implementation cannot do at all.
+What it does support is the design decision in `multicam.reconstruction.align`: on these images, a method that assumes a single rigid scene did not recover the part while the multi-motion fit, which keeps the motion that is not the room, did. It is not evidence that our reconstruction is better than COLMAP's in general.
+
+COLMAP took 1289 s on the workstation that produced this record. It is not run in CI.
 <!-- /table:colmap -->
 
 ---
@@ -286,8 +333,9 @@ The short version:
 
 1. It is all synthetic, and the surface texture is the most flattering
    assumption in it. A real machined part is often shiny and nearly featureless.
-2. The synchronised capture code has never been run, and everything here assumes
-   the four exposures are the same instant.
+2. The synchronised capture code has been run only against simulated GigE
+   Vision cameras, never a real one. The main capture assumes the four
+   exposures are the same instant.
 3. The part is only weakly asymmetric, so ADD and ADD-S are both reported
    everywhere.
 4. The turntable sees the part from one side, which caps completeness and means
@@ -311,10 +359,12 @@ src/multicam/
   pose/            generalised PnP, the classical refiner, the learned refiner
   evaluation/      pose and surface metrics, CAD registration, point labelling
   io/              the capture layout, the COLMAP bridge
+  capture/         sync check and capture loop, the Aravis GenICam backend,
+                   the simulated GigE Vision cameras
   optim.py         manifold Levenberg-Marquardt with a robust kernel
-capture/           synchronised capture for real hardware; never run, and says so
-scripts/           one per stage, plus the demo, the plots and the table generator
-tests/             131 tests
+capture/           the capture command line and the scene camera (C, on Aravis)
+scripts/           one per stage, plus the demos, the plots and the table generator
+tests/             152 tests
 docs/              design, calibration, results, limitations
 data/              rendered captures and DATASET_CARD.md; nothing committed
 ```

@@ -174,13 +174,16 @@ part. It is precisely the failure that
 several rigid motions and keeping the one that is not the identity.
 
 So the honest summary is not "ours is more accurate than COLMAP". It is: given
-identical images, the specific thing our pipeline is built to do is a thing a
-mature, heavily tested reference implementation cannot do, because it was never
-built to do it. That is a much weaker claim about implementation quality and a
-much stronger one about the design decision.
+identical images, COLMAP run with its default settings on unmasked images did
+not recover the part while our pipeline, which is built for exactly this case,
+did. That says something about the design decision and nothing about
+implementation quality. It is also one recorded run: masking out the static
+background or giving COLMAP the calibrated rig was not tried, and might change
+the outcome.
 
-The seed is now fixed, because a number that swings between 50 and 15 has no
-business being quoted in a README.
+The seed is now fixed. Two unseeded runs during development registered 50 and
+15 of the 72 images; only the 15-image run's record was kept, so the spread
+between runs is an observation and not a measurement.
 
 ---
 

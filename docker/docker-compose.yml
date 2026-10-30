@@ -31,7 +31,7 @@ services:
              python scripts/reconstruct.py --data data/turntable --out results &&
              python scripts/dense.py --data data/turntable --out results &&
              python scripts/pose_eval.py --data data/turntable --out results &&
-             python scripts/train_refiner.py --data data/turntable --out results &&
+             python scripts/train_refiner.py --data data/turntable --out results --epochs 40 --batch-size 12 --samples-per-frame 14 --seed 0 &&
              python scripts/ablate.py --data data/turntable --out results &&
              python scripts/colmap_baseline.py --data data/turntable --out results"
 

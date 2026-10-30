@@ -9,10 +9,10 @@
 *.pth binary
 *.npz binary
 
-# Git LFS.  Nothing in the history needs it today -- the renderer regenerates
-# every image and every mesh from a seed, and the trained weights are attached
-# to a Release rather than committed -- but the rules are declared so that a
-# large binary added later lands in LFS instead of the pack file.
+# Git LFS.  Nothing in the history needs it today: the renderer regenerates
+# every image and every mesh from a seed; the trained weights are not
+# published at all (see the README).  The rules are declared so that a large
+# binary added later lands in LFS instead of the pack file.
 *.pt   filter=lfs diff=lfs merge=lfs -text
 *.pth  filter=lfs diff=lfs merge=lfs -text
 *.bag  filter=lfs diff=lfs merge=lfs -text

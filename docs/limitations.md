@@ -38,18 +38,42 @@ on a shiny part under real lighting. When judging whether any of this transfers,
 look at the **feature count per square millimetre of surface**, not at the final
 error.
 
-## 2. The synchronised capture code has never been run
+## 2. The capture code has been run against simulated cameras only
 
-[`capture/capture_sync.py`](../capture/capture_sync.py) is written out — the
-trigger discipline, the timestamp verification, the frame-set rejection, the
-metadata — and it has never touched a camera. The GenICam backend is an
-explicit `NotImplementedError` with instructions rather than a half-working
-driver, because shipping an untested camera driver as though it worked would be
-worse than saying so. The OpenCV backend can be run and warns, every time, that
-it is software triggered and therefore not synchronised.
+The GenICam / GigE Vision capture path
+([`multicam.capture`](../src/multicam/capture), command line in
+[`capture/capture_sync.py`](../capture/capture_sync.py)) is implemented on
+Aravis 0.8.36 and runs in CI against three of Aravis's simulated GigE Vision
+cameras on the loopback interface: feature access over GVCP,
+`AcquisitionStart`, a software trigger per frame set, GVSP streaming, device
+timestamps plus the timestamp check that drops and re-triggers a frame set
+whose exposures are too far apart. `scripts/genicam_demo.py` serves a rendered
+capture from those cameras and runs the calibration, reconstruction and pose
+pipeline on what arrives.
 
-The one function in that file with a unit test is `check_sync`, because it is
-arithmetic over timestamps and needs no camera.
+That is a test of the software path, not of a rig. **It has never touched a
+real camera.** What the simulation cannot show:
+
+- **The hardware trigger.** The default `TriggerSource` is `Line1`, a wired
+  trigger input; the simulator has no trigger lines and every simulated frame
+  set is software triggered. Whether a real trigger wiring delivers
+  simultaneous exposures is untested.
+- **Clock agreement.** The simulated cameras all stamp frames from one host
+  clock. Real cameras need PTP (IEEE 1588) for their timestamps to be
+  comparable; the backend switches it on where the camera offers it and
+  records whether it could; no PTP-capable camera has been tried.
+- **The spreads.** The synchronisation spreads measured in CI are a property of
+  the simulator (it exposes on a 25 Hz grid of the host clock) and say nothing
+  about real cameras, which is why the simulated runs use a 5 ms tolerance and
+  not the 0.2 ms one meant for a hardware trigger.
+- **Real networks.** Loopback has no packet loss to speak of, no switch and no
+  bandwidth limit shared by four cameras. Packet sizes, receive buffers and
+  inter-packet delay would all need tuning on a real network.
+- **The turntable.** There is no motion control; the simulated turntable only
+  tells the simulated cameras which rendered frame to serve.
+
+The OpenCV backend can be run and warns, every time, that it is software
+triggered and therefore not synchronised.
 
 **Everything in this repository assumes the four exposures are simultaneous.**
 On a part moving at 100 mm/s, a 10 ms spread between the first camera and the

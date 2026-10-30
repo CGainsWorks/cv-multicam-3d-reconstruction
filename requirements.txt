@@ -1,4 +1,5 @@
-# Pinned to what every number in the README was produced with.
+# Version ranges, not pins.  The exact versions behind every published number
+# are in the `versions` field of its record under results/published/.
 # Python 3.10 or newer (3.12 used for the results here).
 
 numpy>=1.26,<3
@@ -14,14 +15,19 @@ tqdm>=4.66
 # put a reconstruction into the CAD frame before it is scored.
 open3d>=0.18,<1
 
-# The pose-refinement network.  CPU wheels are enough: the network is small and
-# CI trains it end to end on CPU.  A CUDA build is picked up automatically if
-# one is installed.
+# The pose-refinement network.  CI installs the CPU wheel and runs the unit
+# tests on it; CI does not train the network or run the ablation.  The
+# published training run used a CUDA GPU; a CUDA build is picked up
+# automatically if one is installed.
 torch>=2.2,<3
 
 # COLMAP, as a library, used as the independent reference for the sparse
-# reconstruction in src/multicam/io/colmap.py.  Not used by our own pipeline.
+# reconstruction in src/multicam/io/colmap.py.  Not used by our own pipeline,
+# and the comparison itself (`make colmap`) is run locally, not in CI.
 pycolmap>=3.10
+
+# The GenICam capture path (Aravis through PyGObject) is in
+# requirements-genicam.txt, because it needs Linux and a built Aravis.
 
 # Development
 pytest>=8.0

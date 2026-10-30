@@ -177,9 +177,11 @@ def table_ablation(results):
     verdict = "**improves** ADD by %.3f mm" % -delta if delta < 0 else \
               "**does not improve** ADD; it is %.3f mm worse" % delta
     rows.append("")
-    rows.append("The network %s, at %s ms per station on %s."
-                % (verdict, _fmt(dep.get("refine_ms_per_station"), "%.0f"),
-                   d.get("device", "cpu")))
+    device = d.get("device", "cpu")
+    rows.append("The network %s, at %s ms per station on %s%s."
+                % (verdict, _fmt(dep.get("refine_ms_per_station"), "%.0f"), device,
+                   " (a local workstation GPU; CI has no GPU and does not run the "
+                   "ablation)" if device == "cuda" else ""))
     return "\n".join(rows)
 
 
@@ -252,34 +254,45 @@ def table_colmap(results):
         )
         rows.append("")
         rows.append(
-            "This is a structural result, not a defect in COLMAP and not a tuning "
-            "failure. Structure from motion assumes **one** rigid scene; a "
-            "turntable sequence contains two irreconcilable ones -- a room that "
-            "does not move and a part that does -- and nothing in the algorithm "
-            "can prefer one over the other. The instability is the signature: two "
-            "runs with identical settings registered 50 and 15 of the 72 images, "
-            "which is what no stable solution looks like."
+            "The likely reason is structural rather than a defect in COLMAP. "
+            "Structure from motion assumes **one** rigid scene; a turntable "
+            "sequence contains two, a room that does not move and a part that "
+            "does; nothing in the algorithm prefers the part. That is an "
+            "explanation, not a measurement: this record is a single COLMAP run "
+            "with its default incremental-mapping settings on unmasked images. "
+            "Neither masking out the static background nor handing it the "
+            "calibrated rig was tried. Either would make the comparison fairer "
+            "and might change the result."
         )
     if not recovered_part:
         seed = d["colmap"].get("seed")
         rows.append("")
         rows.append(
             "Run with `pycolmap.set_random_seed(%d)`, so this particular number is "
-            "reproducible; the spread above is what it looks like without one."
-            % seed
+            "reproducible." % seed
             if seed is not None else
-            "_This record predates the fixed seed, so the exact registration count "
-            "is one draw from the spread described above rather than a reproducible "
-            "figure. `scripts/colmap_baseline.py` now seeds the mapper._"
+            "_This record predates the fixed seed, so the registration count is "
+            "one draw of a randomised mapper, not a reproducible figure. An "
+            "earlier unseeded run registered a different number of images; its "
+            "record was not kept, so how much the count varies is not measured "
+            "here. `scripts/colmap_baseline.py` now seeds the mapper._"
         )
         rows.append("")
         rows.append(
-            "It is also the clearest evidence available that the multi-motion fit "
-            "in `multicam.reconstruction.align` is necessary rather than "
-            "ornamental: given the same images, the thing it exists to do is the "
-            "thing a mature, heavily-tested reference implementation cannot do at "
-            "all."
+            "What it does support is the design decision in "
+            "`multicam.reconstruction.align`: on these images, a method that "
+            "assumes a single rigid scene did not recover the part while the "
+            "multi-motion fit, which keeps the motion that is not the room, did. "
+            "It is not evidence that our reconstruction is better than COLMAP's "
+            "in general."
         )
+        seconds = d["colmap"].get("seconds")
+        if seconds is not None:
+            rows.append("")
+            rows.append(
+                "COLMAP took %s s on the workstation that produced this record. "
+                "It is not run in CI." % _fmt(seconds, "%.0f")
+            )
     else:
         rows.append("")
         rows.append(

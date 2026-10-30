@@ -5,6 +5,9 @@
 #   FAST      seconds to a few minutes, nothing to download.  Everything CI
 #             runs, plus the end-to-end demo.
 #               make test  make lint  make demo  make check
+#             `make genicam` needs Linux and Aravis (scripts/genicam/);
+#             `make genicam-docker` needs only Docker.
+#               make genicam  make genicam-docker
 #
 #   FULL      renders the full capture and reproduces every number the README
 #             quotes.  `make data` is about twenty minutes and 900 MB on disk;
@@ -23,7 +26,11 @@ DATA ?= data/turntable
 RESULTS ?= results
 MODELS ?= models
 STATION_STEP ?= 2
-EPOCHS ?= 24
+# The configuration of the published training run, as recorded in
+# results/published/refiner_training.json.
+EPOCHS ?= 40
+BATCH_SIZE ?= 12
+SAMPLES_PER_FRAME ?= 14
 
 .DEFAULT_GOAL := help
 
@@ -55,6 +62,15 @@ lint:  ## Formatting and obvious errors
 demo:  ## Render a miniature capture and run the whole pipeline over it (~4 min)
 	$(PYTHON) scripts/demo.py --out $(RESULTS)/demo.json
 
+.PHONY: genicam
+genicam:  ## The pipeline fed over GigE Vision from simulated cameras (Linux, Aravis)
+	$(PYTHON) scripts/genicam_demo.py --out $(RESULTS)/genicam.json
+
+.PHONY: genicam-docker
+genicam-docker:  ## The GenICam tests and demo in a container, no network
+	docker build -f docker/genicam.Dockerfile -t multicam-genicam .
+	docker run --rm --network none --cap-add NET_ADMIN multicam-genicam
+
 # ---------------------------------------------------------------------------
 # Full
 # ---------------------------------------------------------------------------
@@ -82,9 +98,10 @@ pose:  ## Classical 6-DoF pose on the held-out stations
 	$(PYTHON) scripts/pose_eval.py --data $(DATA) --out $(RESULTS)
 
 .PHONY: train
-train:  ## Train the pose-refinement network
+train:  ## Train the pose-refinement network (1820 s on a CUDA GPU when recorded)
 	$(PYTHON) scripts/train_refiner.py --data $(DATA) --out $(RESULTS) \
-		--models $(MODELS) --epochs $(EPOCHS)
+		--models $(MODELS) --epochs $(EPOCHS) --batch-size $(BATCH_SIZE) \
+		--samples-per-frame $(SAMPLES_PER_FRAME) --seed 0
 
 .PHONY: ablate
 ablate:  ## The ablation: classical alone against classical plus the network

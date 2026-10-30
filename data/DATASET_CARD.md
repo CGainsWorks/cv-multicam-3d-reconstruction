@@ -105,7 +105,7 @@ This is the part that matters when reading any number in this repository.
 | --- | --- | --- |
 | **Surface appearance** | Broadband procedural texture with energy down to the pixel. | Machined aluminium is often shiny, often nearly untextured, and specular highlights move with the viewpoint. Feature density would be far lower and matching much harder. |
 | **Illumination** | One directional light plus ambient, flat-shaded per triangle, constant across the sweep. | Shadows, interreflections, flicker, and a part that changes brightness as it turns. |
-| **Synchronisation** | Exact. Every camera sees the same instant. | The hardest thing to get right. See [`capture/capture_sync.py`](../capture/capture_sync.py), which is written and has never been run. |
+| **Synchronisation** | Exact. Every camera sees the same instant. | The hardest thing to get right. See [`capture/capture_sync.py`](../capture/capture_sync.py), which has been run against simulated GigE Vision cameras only. |
 | **Geometry** | A procedurally generated mesh, closed and clean. | A scanned or exported CAD mesh with holes, self-intersections and a different tessellation from the part it describes. |
 | **Lens model** | Exactly the five-parameter radial-tangential model the calibration fits. | Approximately that model. The residual is what a real calibration's error floor is made of. |
 | **The part/background split** | The part turns, the room does not. | The same, which is why the multi-motion fit is the right approach rather than a convenience. |
