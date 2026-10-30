@@ -29,7 +29,10 @@ camera, lens, trigger line or turntable has ever been connected to this code.
   test pattern replaced by the rendered frames, `capture/fakecam/`), captures
   every frame set back through the GenICam path, requires every frame to be
   bit-identical to what was rendered, then runs calibration, reconstruction and
-  pose on the captured frames against the same guards as the demo. CI runs it.
+  pose on the captured frames against the demo's guards. One guard differs: the
+  sparse cloud's median distance to CAD is held to 2.0 mm rather than 1.5 mm,
+  because three cameras triangulate fewer points than four (1.60 mm on the
+  first CI run). CI runs it.
 - **Learned refiner and its ablation**, with the result that the network does
   not ship. The published numbers are in `results/published/`.
 - **COLMAP reference run** (local, recorded in `results/published/colmap.json`).

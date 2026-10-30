@@ -237,8 +237,8 @@ correspondences — are in [docs/results.md](docs/results.md).
 
 **The trained network is not published**: `models/refiner.pt` is not in the
 repository, in a release or anywhere else. The ablation above therefore cannot
-be rerun from a clone as it stands; the network has to be retrained first. A retrained
-network will not reproduce these numbers to the last digit. CI does
+be rerun from a clone as it stands; the network has to be retrained first. A
+retrained network will not reproduce these numbers to the last digit. CI does
 not train it and does not run the ablation.
 
 On a clean clone, with the configuration recorded in
@@ -247,7 +247,8 @@ On a clean clone, with the configuration recorded in
 ```bash
 make data                       # render the capture, about 20 minutes
 make calibrate reconstruct pose # the rig, the sparse model and the classical pose
-python scripts/train_refiner.py --data data/turntable --out results --models models     --epochs 40 --batch-size 12 --samples-per-frame 14 --seed 0
+python scripts/train_refiner.py --data data/turntable --out results --models models \
+    --epochs 40 --batch-size 12 --samples-per-frame 14 --seed 0
 python scripts/ablate.py --data data/turntable --out results
 ```
 
