@@ -92,6 +92,8 @@ def build_parser():
     # roughly doubles the calibration error.
     p.add_argument("--supersample", type=int, default=2)
     p.add_argument("--seed", type=int, default=11)
+    p.add_argument("--cameras", type=int, default=4,
+                   help="cameras in the rig; the arc keeps 25 degrees between neighbours")
     p.add_argument("--keep", action="store_true", help="keep the rendered capture")
     p.add_argument("--no-check", action="store_true", help="report but do not assert")
     return p
@@ -108,7 +110,9 @@ def _render(root, args, say):
         seed=args.seed,
         depth_maps=False,
     )
-    rig = build_rig(RigSpec(width=args.width, height=args.height, seed=args.seed * 7 + 1))
+    rig = build_rig(RigSpec(n_cameras=args.cameras, width=args.width, height=args.height,
+                            azimuth_span=RigSpec.azimuth_span * (args.cameras - 1) / 3.0,
+                            seed=args.seed * 7 + 1))
     scene = default_scene(seed=args.seed + 3, texture_size=512)
     target, board_sc, board_cell_sc, margin_m = make_target_and_scene(config, cell=scene)
     T_rig_world = nominal_rig_pose(rig)
@@ -142,6 +146,159 @@ def _render(root, args, say):
     return counts
 
 
+def run_pipeline(root, say=print):
+    """Calibrate, reconstruct and estimate pose over the capture at ``root``.
+
+    Stages 2 to 4 of the demo, on whatever capture is there: one this script
+    rendered, or one that arrived over GigE Vision (scripts/genicam_demo.py).
+    Returns the per-stage records.
+    """
+    record = {}
+    data = Dataset(root)
+    truth = data.truth_rig
+    cfg = data.meta["config"]
+    target = CharucoTarget(
+        __import__("multicam.sim.textures", fromlist=["charuco_board"]).charuco_board(
+            squares_x=cfg["board_squares"][0], squares_y=cfg["board_squares"][1],
+            square_length=cfg["square_length_m"],
+        )
+    )
+
+    # -- 2. calibration -------------------------------------------------
+    say("2/4  calibrating the rig")
+    t0 = time.time()
+    cameras, intrinsics = [], []
+    for c in range(data.n_cameras):
+        detections = [
+            target.detect(data.intrinsic_image(c, k), camera=c, frame=k)
+            for k in range(len(data.intrinsic_views(c)))
+        ]
+        result = calibrate_intrinsics(
+            target, [d for d in detections if d is not None],
+            data.meta["width"], data.meta["height"], name="cam%d" % c,
+            opencv_check=False,
+        )
+        intrinsics.append(result)
+        cameras.append(result.camera)
+
+    board_detections = {}
+    for frame in data.extrinsic_frames():
+        for c in range(data.n_cameras):
+            det = target.detect(data.extrinsic_image(frame, c), camera=c, frame=frame)
+            if det is not None:
+                board_detections[(frame, c)] = det
+    extrinsic = calibrate_extrinsics(cameras, target, board_detections)
+    rig = extrinsic.rig
+    errors = compare_rigs(rig, truth)
+
+    intr_rmse = float(np.mean([r.rmse_px for r in intrinsics]))
+    focal_err = float(max(abs(r.camera.fx - truth.cameras[i].fx)
+                          for i, r in enumerate(intrinsics)))
+    trans_err = float(max(r["translation_error_mm"] for r in errors))
+    rot_err = float(max(r["rotation_error_deg"] for r in errors))
+    say("  intrinsics rmse %.3f px, worst focal error %.2f px" % (intr_rmse, focal_err))
+    say("  extrinsics rmse %.3f px, worst %.2f mm / %.3f deg"
+        % (extrinsic.rmse_px, trans_err, rot_err))
+    record["calibration"] = {
+        "intrinsic_rmse_px": intr_rmse, "intrinsic_focal_error_px": focal_err,
+        "extrinsic_rmse_px": extrinsic.rmse_px,
+        "extrinsic_translation_mm": trans_err, "extrinsic_rotation_deg": rot_err,
+        "seconds": round(time.time() - t0, 2),
+    }
+
+    # -- 3. reconstruction ----------------------------------------------
+    say("3/4  reconstructing the part")
+    t0 = time.time()
+    frames = data.turntable_frames()
+    images = {f: {c: data.turntable_image(f, c) for c in range(data.n_cameras)}
+              for f in frames}
+    rec = reconstruct(images, rig, ReconstructionConfig())
+
+    cad = data.object_mesh
+    T_truth = np.linalg.inv(data.T_rig_world @ data.T_world_object(frames[0]))
+    masks = {s: {c: data.turntable_mask(f, c) for c in range(data.n_cameras)}
+             for s, f in enumerate(frames)}
+    labels, _ = label_observations(rec.observations, masks, len(rec))
+    comp = composition(labels)
+    distance = SurfaceDistance(cad)
+    points_cad = se3.transform(T_truth, rec.points)
+    accuracy = sparse_accuracy(points_cad[labels == OBJECT], cad, inlier_mm=5.0,
+                               distance=distance)
+    ba = rec.stats.get("bundle_second_pass", rec.stats["bundle"])
+    say("  %d points (%d on the part), reprojection %.3f px, CAD median %.3f mm"
+        % (len(rec), comp["part"], ba["rmse_px"], accuracy["median_mm"]))
+    record["reconstruction"] = {
+        "points": int(len(rec)), "part_points": comp["part"],
+        "reconstruction_rmse_px": ba["rmse_px"],
+        "cad_median_mm": accuracy["median_mm"],
+        "composition": comp, "seconds": round(time.time() - t0, 2),
+    }
+
+    # -- 4. pose ---------------------------------------------------------
+    say("4/4  estimating 6-DoF pose on held-out stations")
+    t0 = time.time()
+    model = build_model(points_cad, rec.descriptors, cad, surface_mm=4.0,
+                        distance=distance)
+    detector = make_detector()
+    _, test_frames = data.pose_split()
+    T_rig_world = data.T_rig_world
+    estimates, truths = [], []
+    for f in test_frames:
+        correspondences = [
+            match_to_model(
+                detect(data.pose_image(f, c), detector, camera=c, frame=f), model
+            )
+            for c in range(data.n_cameras)
+        ]
+        result = estimate_pose(rig, correspondences, rng=np.random.default_rng(f))
+        estimates.append(result.T_rig_object if result.ok else None)
+        truths.append(T_rig_world @ data.T_world_object_pose(f))
+
+    model_points, _ = cad.sample_surface(1024, np.random.default_rng(0))
+    failures = sum(1 for e in estimates if e is None)
+    table = pose_error_table(
+        [e for e in estimates if e is not None],
+        [t for e, t in zip(estimates, truths) if e is not None],
+        model_points, cad.diameter, failures=failures,
+    )
+    say("  %d stations, %d failed: translation median %.3f mm, rotation %.4f deg"
+        % (len(test_frames), failures, table["translation_mm"]["median"],
+           table["rotation_deg"]["median"]))
+    say("  ADD median %.3f mm, recall at 2%% of diameter %.0f%%"
+        % (table["add_mm"]["median"], 100 * table["add_recall_2_pct_diameter"]))
+    record["pose"] = {
+        "stations": len(test_frames), "failures": failures,
+        "pose_translation_mm": table["translation_mm"]["median"],
+        "pose_rotation_deg": table["rotation_deg"]["median"],
+        "min_pose_recall_10pct": table["add_recall_10_pct_diameter"],
+        "metrics": table, "seconds": round(time.time() - t0, 2),
+    }
+    return record
+
+
+def apply_limits(record, say=print, limits=None):
+    """Check the stage records against the regression guards.
+
+    Returns ``(measured, failures)``.
+    """
+    limits = LIMITS if limits is None else limits
+    measured = {}
+    for section in ("calibration", "reconstruction", "pose"):
+        measured.update({k: v for k, v in record[section].items() if k in limits})
+    failures = []
+    for key, limit in limits.items():
+        if key not in measured:
+            continue
+        value = measured[key]
+        bad = value < limit if key.startswith("min_") else value > limit
+        status = "FAIL" if bad else "ok"
+        say("  %-28s %10.4f  %s %-8.3f  %s"
+            % (key, value, "<" if key.startswith("min_") else ">", limit, status))
+        if bad:
+            failures.append("%s = %.4f, limit %.4f" % (key, value, limit))
+    return measured, failures
+
+
 def main(argv=None):
     args = build_parser().parse_args(argv)
     say = print
@@ -160,125 +317,7 @@ def main(argv=None):
     try:
         say("1/4  rendering a miniature capture at %dx%d" % (args.width, args.height))
         record["capture"] = _render(root, args, say)
-        data = Dataset(root)
-        truth = data.truth_rig
-        cfg = data.meta["config"]
-        target = CharucoTarget(
-            __import__("multicam.sim.textures", fromlist=["charuco_board"]).charuco_board(
-                squares_x=cfg["board_squares"][0], squares_y=cfg["board_squares"][1],
-                square_length=cfg["square_length_m"],
-            )
-        )
-
-        # -- 2. calibration -------------------------------------------------
-        say("2/4  calibrating the rig")
-        t0 = time.time()
-        cameras, intrinsics = [], []
-        for c in range(data.n_cameras):
-            detections = [
-                target.detect(data.intrinsic_image(c, k), camera=c, frame=k)
-                for k in range(len(data.intrinsic_views(c)))
-            ]
-            result = calibrate_intrinsics(
-                target, [d for d in detections if d is not None],
-                data.meta["width"], data.meta["height"], name="cam%d" % c,
-                opencv_check=False,
-            )
-            intrinsics.append(result)
-            cameras.append(result.camera)
-
-        board_detections = {}
-        for frame in data.extrinsic_frames():
-            for c in range(data.n_cameras):
-                det = target.detect(data.extrinsic_image(frame, c), camera=c, frame=frame)
-                if det is not None:
-                    board_detections[(frame, c)] = det
-        extrinsic = calibrate_extrinsics(cameras, target, board_detections)
-        rig = extrinsic.rig
-        errors = compare_rigs(rig, truth)
-
-        intr_rmse = float(np.mean([r.rmse_px for r in intrinsics]))
-        focal_err = float(max(abs(r.camera.fx - truth.cameras[i].fx)
-                              for i, r in enumerate(intrinsics)))
-        trans_err = float(max(r["translation_error_mm"] for r in errors))
-        rot_err = float(max(r["rotation_error_deg"] for r in errors))
-        say("  intrinsics rmse %.3f px, worst focal error %.2f px" % (intr_rmse, focal_err))
-        say("  extrinsics rmse %.3f px, worst %.2f mm / %.3f deg"
-            % (extrinsic.rmse_px, trans_err, rot_err))
-        record["calibration"] = {
-            "intrinsic_rmse_px": intr_rmse, "intrinsic_focal_error_px": focal_err,
-            "extrinsic_rmse_px": extrinsic.rmse_px,
-            "extrinsic_translation_mm": trans_err, "extrinsic_rotation_deg": rot_err,
-            "seconds": round(time.time() - t0, 2),
-        }
-
-        # -- 3. reconstruction ----------------------------------------------
-        say("3/4  reconstructing the part")
-        t0 = time.time()
-        frames = data.turntable_frames()
-        images = {f: {c: data.turntable_image(f, c) for c in range(data.n_cameras)}
-                  for f in frames}
-        rec = reconstruct(images, rig, ReconstructionConfig())
-
-        cad = data.object_mesh
-        T_truth = np.linalg.inv(data.T_rig_world @ data.T_world_object(frames[0]))
-        masks = {s: {c: data.turntable_mask(f, c) for c in range(data.n_cameras)}
-                 for s, f in enumerate(frames)}
-        labels, _ = label_observations(rec.observations, masks, len(rec))
-        comp = composition(labels)
-        distance = SurfaceDistance(cad)
-        points_cad = se3.transform(T_truth, rec.points)
-        accuracy = sparse_accuracy(points_cad[labels == OBJECT], cad, inlier_mm=5.0,
-                                   distance=distance)
-        ba = rec.stats.get("bundle_second_pass", rec.stats["bundle"])
-        say("  %d points (%d on the part), reprojection %.3f px, CAD median %.3f mm"
-            % (len(rec), comp["part"], ba["rmse_px"], accuracy["median_mm"]))
-        record["reconstruction"] = {
-            "points": int(len(rec)), "part_points": comp["part"],
-            "reconstruction_rmse_px": ba["rmse_px"],
-            "cad_median_mm": accuracy["median_mm"],
-            "composition": comp, "seconds": round(time.time() - t0, 2),
-        }
-
-        # -- 4. pose ---------------------------------------------------------
-        say("4/4  estimating 6-DoF pose on held-out stations")
-        t0 = time.time()
-        model = build_model(points_cad, rec.descriptors, cad, surface_mm=4.0,
-                            distance=distance)
-        detector = make_detector()
-        _, test_frames = data.pose_split()
-        T_rig_world = data.T_rig_world
-        estimates, truths = [], []
-        for f in test_frames:
-            correspondences = [
-                match_to_model(
-                    detect(data.pose_image(f, c), detector, camera=c, frame=f), model
-                )
-                for c in range(data.n_cameras)
-            ]
-            result = estimate_pose(rig, correspondences, rng=np.random.default_rng(f))
-            estimates.append(result.T_rig_object if result.ok else None)
-            truths.append(T_rig_world @ data.T_world_object_pose(f))
-
-        model_points, _ = cad.sample_surface(1024, np.random.default_rng(0))
-        failures = sum(1 for e in estimates if e is None)
-        table = pose_error_table(
-            [e for e in estimates if e is not None],
-            [t for e, t in zip(estimates, truths) if e is not None],
-            model_points, cad.diameter, failures=failures,
-        )
-        say("  %d stations, %d failed: translation median %.3f mm, rotation %.4f deg"
-            % (len(test_frames), failures, table["translation_mm"]["median"],
-               table["rotation_deg"]["median"]))
-        say("  ADD median %.3f mm, recall at 2%% of diameter %.0f%%"
-            % (table["add_mm"]["median"], 100 * table["add_recall_2_pct_diameter"]))
-        record["pose"] = {
-            "stations": len(test_frames), "failures": failures,
-            "pose_translation_mm": table["translation_mm"]["median"],
-            "pose_rotation_deg": table["rotation_deg"]["median"],
-            "min_pose_recall_10pct": table["add_recall_10_pct_diameter"],
-            "metrics": table, "seconds": round(time.time() - t0, 2),
-        }
+        record.update(run_pipeline(root, say))
     finally:
         if tmp is not None and not args.keep:
             tmp.cleanup()
@@ -291,21 +330,7 @@ def main(argv=None):
         "experiments` reproduces the README's numbers.")
 
     # -- the guards --------------------------------------------------------
-    measured = {}
-    for section in ("calibration", "reconstruction", "pose"):
-        measured.update({k: v for k, v in record[section].items() if k in LIMITS})
-    failures = []
-    for key, limit in LIMITS.items():
-        if key not in measured:
-            continue
-        value = measured[key]
-        bad = value < limit if key.startswith("min_") else value > limit
-        status = "FAIL" if bad else "ok"
-        say("  %-28s %10.4f  %s %-8.3f  %s"
-            % (key, value, "<" if key.startswith("min_") else ">", limit, status))
-        if bad:
-            failures.append("%s = %.4f, limit %.4f" % (key, value, limit))
-
+    measured, failures = apply_limits(record, say)
     record["measured"] = measured
     record["failures"] = failures
     if args.out:
